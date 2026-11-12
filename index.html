@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="night">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark light" />
+<meta name="theme-color" content="#3B4650" />
+<title>闻息 · 香事</title>
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/scentviz.css" />
+<link rel="stylesheet" href="css/pet.css" />
+<link rel="stylesheet" href="css/art-integration.css" />
+<link rel="preload" as="image" href="assets/censer/day.png" />
+<link rel="preload" as="image" href="assets/censer/night.png" />
+<link rel="stylesheet" href="css/interaction-art.css?v=20261108c" />
+<link rel="stylesheet" href="css/foil-ignition.css?v=20261108c" />
+<link rel="stylesheet" href="css/embedded-masks.css?v=20261108c" />
+</head>
+<body data-theme="night" data-view="today">
+
+<!-- 材质层 -->
+<div class="grain" aria-hidden="true"></div>
+<div class="washes" aria-hidden="true">
+  <span class="wash wash-a"></span><span class="wash wash-b"></span><span class="wash wash-c"></span>
+</div>
+<div class="vignette" aria-hidden="true"></div>
+
+<!-- 香烟粒子画布（从 v2 搬回：炉口真实的烟） -->
+<canvas id="smoke" class="smoke" aria-hidden="true"></canvas>
+
+<!-- 顶栏 -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-seal" aria-hidden="true">香</span>
+    <span class="brand-name">闻息</span>
+    <span class="brand-tag">WENXI</span>
+  </div>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="主导航">
+    <button class="tab is-on" data-view="today" role="tab" aria-selected="true" type="button">今日</button>
+    <button class="tab" data-view="adjust" role="tab" aria-selected="false" type="button">调节</button>
+    <button class="tab" data-view="records" role="tab" aria-selected="false" type="button">记录</button>
+  </nav>
+
+  <div class="top-actions">
+    <button id="btnTheme" class="chip chip-theme" type="button" title="白天 / 夜间（快捷键 L）">
+      <i class="chip-dot" aria-hidden="true"></i><span id="themeLabel">夜</span>
+    </button>
+    <button id="btnPet" class="chip" type="button" aria-pressed="false" title="桌宠（快捷键 P）">桌宠</button>
+    <button id="btnSound" class="chip" type="button" aria-pressed="false" title="声音（快捷键 M）"><i class="chip-dot" aria-hidden="true"></i>声</button>
+    <button id="btnRef" class="chip" type="button" aria-expanded="false" aria-controls="refSheet" title="香事（快捷键 K）">香事</button>
+    <button id="btnHelp" class="chip" type="button" title="使用帮助（快捷键 H）">帮助</button>
+  </div>
+</header>
+
+<main class="app">
+  <!-- ═══════════ 主界面 1 · 今日状态（一层：只有炉与一句话） ═══════════ -->
+  <section id="view-today" class="view is-on" role="tabpanel" aria-label="今日状态">
+    <div class="stage">
+
+      <!-- 左：设备图标（只有图形 + 状态点） -->
+      <aside class="rail rail-left" aria-label="设备">
+        <button class="rail-toggle" type="button" data-rail="left" aria-label="收起设备" aria-expanded="true">‹</button>
+        <button class="rail-btn" type="button" data-panel="watch" aria-label="腕表" title="腕表">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="10" y="9" width="12" height="14" rx="4"/>
+            <path d="M13 9V5h6v4M13 23v4h6v-4"/>
+            <circle cx="16" cy="16" r="1.3" class="fill"/>
+          </svg>
+          <span class="rail-dot" id="watchDot"></span>
+          <span class="rail-val" id="watchPill">82%</span>
+        </button>
+        <button class="rail-btn" type="button" data-panel="diff" aria-label="香氛仪" title="香氛仪">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M12 11h8v2.4c2.8 2 4 4.6 4 7.6 0 4.2-3.5 6.6-8 6.6s-8-2.4-8-6.6c0-3 1.2-5.6 4-7.6z"/>
+            <path d="M14 7c0-1.7 1-3 2-3s2 1.3 2 3"/>
+          </svg>
+          <span class="rail-dot" id="diffDot"></span>
+          <span class="rail-val" id="diffPill">50%</span>
+        </button>
+      </aside>
+
+      <!-- 中：香炉 = 全部主题 -->
+      <div class="hero">
+        <div class="censer-wrap" id="censer" role="button" tabindex="0"
+             aria-label="香器。按住 1.8 秒点香" aria-pressed="false">
+          <div class="censer-glow" id="censerGlow" aria-hidden="true"></div>
+                    <!-- 长按进度光圈（在炉子后面，像一圈光） -->
+          <svg class="press-ring" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+            <circle class="press-track" cx="200" cy="205" r="176"/>
+            <circle class="press-fill" id="pressFill" cx="200" cy="205" r="176"/>
+          </svg>
+          <div class="censer-ground-shadow" aria-hidden="true"></div>
+          <img class="censer-art censer-art-day" src="assets/censer/day.png"
+               width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
+          <img class="censer-art censer-art-night" src="assets/censer/night.png"
+               width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
+<span class="ignition-glow ignition-1" aria-hidden="true"></span>
+<span class="ignition-glow ignition-2" aria-hidden="true"></span>
+<span class="ignition-glow ignition-3" aria-hidden="true"></span>
+<span class="ignition-glow ignition-4" aria-hidden="true"></span>
+<span class="ignition-glow ignition-5" aria-hidden="true"></span>
+<span class="ignition-spark spark-one" aria-hidden="true"></span><span class="ignition-spark spark-two" aria-hidden="true"></span>
+<span class="ignition-spark spark-three" aria-hidden="true"></span><span class="ignition-spark spark-four" aria-hidden="true"></span><span class="ignition-spark spark-five" aria-hidden="true"></span>
+          <span class="censer-smoke-origin" id="censerSmokeOrigin" aria-hidden="true"></span>
+
+          <div class="censer-hint" id="censerHint">长按 · 点香</div>
+        </div>
+
+        <p class="verse" aria-hidden="true">一炷烟起　万虑皆息</p>
+
+        <p class="state-line" id="stateLine">此刻 · 香冷</p>
+        <p class="tcm-line" id="tcmLine"><span class="tcm-tag" id="tcmTag">平和</span><span class="tcm-note" id="tcmNote">气血调匀</span></p>
+        <button class="link-btn" id="btnDetail" type="button">看见身体信号 →</button>
+      </div>
+
+      <!-- 右：数据徽记（只露一个数） -->
+      <aside class="rail rail-right" aria-label="数据">
+        <button class="rail-toggle" type="button" data-rail="right" aria-label="收起数据" aria-expanded="true">›</button>
+        <button class="rail-btn" type="button" data-panel="body" aria-label="身体数据" title="身体数据">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 17h5.5l3.2-7.5 4.2 15 3.1-7.5H29"/></svg>
+          <span class="rail-val" id="hrPill">68</span>
+        </button>
+        <button class="rail-btn" type="button" data-panel="scent" aria-label="当前香方" title="当前香方">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5.5c4.4 5.4 6.6 8.8 6.6 12a6.6 6.6 0 0 1-13.2 0c0-3.2 2.2-6.6 6.6-12z"/></svg>
+          <span class="rail-val" id="scentPill">沉香</span>
+        </button>
+      </aside>
+    </div>
+    <!-- 第二层：点图标才展开的详情 -->
+    <div class="sheet" id="sheet" aria-hidden="true">
+      <div class="sheet-card">
+        <button class="sheet-close" id="sheetClose" type="button" aria-label="收起">×</button>
+
+        <div class="sheet-panel" data-panel="watch">
+          <p class="sheet-title">腕表</p>
+          <p class="sheet-lead" id="watchState">已连接</p>
+          <p class="sheet-meta"><span id="watchSensing">正在采集</span> · 电量 <b id="watchBatt">82%</b></p>
+          <p class="sheet-note">贴在腕上，读的是脉搏的节律</p>
+        </div>
+
+        <div class="sheet-panel" data-panel="diff">
+          <p class="sheet-title">香氛仪</p>
+          <p class="sheet-lead" id="diffState">保温中</p>
+          <p class="sheet-meta">香料余量 <b id="diffStock">50%</b> · 剩余 <b id="diffRemain">—</b></p>
+          <p class="sheet-note">无明火，靠微风把香气送出来</p>
+        </div>
+
+        <div class="sheet-panel" data-panel="body">
+          <p class="sheet-title">身体数据</p>
+<p class="body-line" id="bodyLine">心率 68 · HRV 62 · 压力 28%</p>
+          <div class="sheet-nums">
+            <span><b id="hr">68</b><i>bpm · 心率</i></span>
+            <span><b id="hrv">62</b><i>ms · HRV</i></span>
+          </div>
+          <svg id="miniTrend" class="sheet-trend" viewBox="0 0 240 54" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <p class="sheet-note">近 30 分钟 · <span id="dataTime">更新于 17:02</span> · 只看趋势，不做诊断</p>
+        </div>
+
+        <div class="sheet-panel" data-panel="scent">
+          <p class="sheet-title">当前香方</p>
+          <p class="sheet-lead" id="scentName">沉香 · 竹青 · 龙脑</p>
+          <p class="sheet-meta" id="tcmWhy">中医状态：平和 · 气血调匀</p>
+          <div class="scent-chips" id="scentChips"></div>
+          <div class="scent-thin" id="scentThin" aria-hidden="true"></div>
+          <p class="sheet-meta" id="scentRemain">尚未开始</p>
+          <div class="scent-actions">
+            <button class="mini-btn" id="btnPause" type="button">暂停</button>
+            <button class="mini-btn strong" id="btnGotoAdjust" type="button">去调节</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════ 主界面 2 · 调节空间 ═══════════ -->
+  <section id="view-adjust" class="view" role="tabpanel" aria-label="调节空间">
+    <div class="adj-grid">
+
+      <!-- 左：场景 + 控制 -->
+      <aside class="col adj-left">
+        <h3 class="sec-title">这次想获得怎样的体验</h3>
+        <p class="sec-sub">先挑一个起点，之后随时能改</p>
+        <div class="scenes" id="scenes">
+          <button class="scene" data-scene="focus" type="button">专注</button>
+          <button class="scene" data-scene="relax" type="button">放松</button>
+          <button class="scene" data-scene="sleep" type="button">入睡</button>
+          <button class="scene" data-scene="lift" type="button">提神</button>
+        </div>
+
+        <h3 class="sec-title">扩香强度</h3>
+        <div class="range-row">
+          <input id="intensity" class="range" type="range" min="1" max="5" step="1" value="3" aria-label="扩香强度" />
+          <span class="range-val" id="intensityVal">中</span>
+        </div>
+
+        <h3 class="sec-title">时长</h3>
+        <div class="seg" id="durations">
+          <button class="seg-btn" data-min="10" type="button">10 分</button>
+          <button class="seg-btn is-on" data-min="20" type="button">20 分</button>
+          <button class="seg-btn" data-min="30" type="button">30 分</button>
+        </div>
+
+        <h3 class="sec-title">声音陪伴</h3>
+        <div class="seg" id="soundSeg">
+          <button class="seg-btn is-on" data-snd="off" type="button">静默</button>
+          <button class="seg-btn" data-snd="on" type="button">环境音</button>
+          <button class="seg-btn" data-snd="music" type="button" disabled title="轻音乐音源准备中">轻音乐</button>
+        </div>
+        <p class="sec-sub">轻音乐音源准备中</p>
+      </aside>
+
+      <!-- 中：香方配比（视觉主体） -->
+      <div class="col adj-center">
+        <h3 class="sec-title center">当前香方与配比</h3>
+        <div class="scent-viz" id="scentViz"><!-- ScentViz 渲染 --></div>
+        <div class="scent-legend" id="scentLegend"></div>
+        <p class="viz-note" id="vizNote">配比随场景与实时状态缓慢变化</p>
+      </div>
+
+      <!-- 右：控制权 + 进度 -->
+      <aside class="col adj-right">
+        <h3 class="sec-title">谁来调节</h3>
+        <p class="sec-sub">系统可以建议，但改不改你说了算</p>
+        <div class="auto-modes" id="autoModes">
+          <button class="auto-mode" data-auto="manual" type="button"><b>完全手动</b><i>全部由你决定</i></button>
+          <button class="auto-mode is-on" data-auto="semi" type="button"><b>半自动 · 提示确认</b><i>系统建议，你点头才改</i></button>
+          <button class="auto-mode" data-auto="auto" type="button"><b>自动 · 提示</b><i>自己调，但会告诉你</i></button>
+          <button class="auto-mode" data-auto="full" type="button"><b>完全自动</b><i>不打扰，安静地调</i></button>
+        </div>
+
+        <h3 class="sec-title">运行</h3>
+        <p class="sec-sub">一炷香烧完就结束</p>
+        <div class="run">
+          <div class="run-bar"><i id="runBar"></i></div>
+          <p class="run-meta"><span id="runTime">20:00</span> · <span id="runState">未开始</span></p>
+          <div class="run-btns">
+            <button class="btn-primary" id="btnStart" type="button">开始</button>
+            <button class="btn-ghost" id="btnStop" type="button">结束</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════ 记录 ═══════════ -->
+  <section id="view-records" class="view" role="tabpanel" aria-label="记录">
+    <p class="rec-summary" id="dailySummary">今日 · 已陪你 42 分钟 · 点香 0 次</p>
+    <div class="rec-grid">
+      <div class="col">
+        <h3 class="sec-title">本月</h3>
+        <div class="calendar" id="calendar"></div>
+      </div>
+      <div class="col">
+        <h3 class="sec-title">心率趋势 · 今日</h3>
+        <svg id="trendBig" class="trend-big" viewBox="0 0 620 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <h3 class="sec-title" style="margin-top:26px">香事录</h3>
+        <ol class="log" id="eventLog"></ol>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 建议条（半自动/自动时出现） -->
+<div class="suggest" id="suggestBar" aria-hidden="true">
+  <span class="suggest-text" id="suggestText">系统建议：竹青 +8%、龙脑 −4%</span>
+  <span class="suggest-btns">
+    <button id="btnAccept" type="button">接受调整</button>
+    <button id="btnKeep" type="button">保持当前</button>
+  </span>
+</div>
+
+<!-- 考据浮层 -->
+<section id="refSheet" class="ref-sheet" aria-hidden="true">
+  <div class="ref-inner">
+    <header class="ref-head"><span class="ref-kicker">香事</span><button id="refClose" class="ref-close" type="button">合上</button></header>
+    <div class="ref-body">
+      <p class="ref-lead">传统香制作技艺</p>
+      <p class="ref-meta">国家级非物质文化遗产 · 编号 <b>Ⅷ-224</b><br>（含药香制作技艺 · 北京西城）</p>
+      <p class="ref-label">香篆八步</p>
+      <ol class="ref-steps"><li>铺灰</li><li>压灰</li><li>置模</li><li>填粉</li><li>提模</li><li>理线</li><li>引燃</li><li>观形</li></ol>
+      <blockquote class="ref-quote">「烧香点茶，挂画插花，四般闲事，不宜累家」<cite>宋 · 吴自牧《梦粱录》卷十九</cite></blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- 首屏引导：一步一步看 -->
+<div class="coach" id="coach" aria-hidden="true">
+  <div class="coach-dim"></div>
+  <div class="coach-card">
+    <button class="coach-close" id="helpClose" type="button" aria-label="关闭帮助">合上</button>
+    <p class="coach-kicker">使用帮助 · 随时翻看</p>
+
+    <div class="coach-steps" id="coachSteps" role="tablist" aria-label="引导步骤">
+      <button class="cstep is-on" type="button" data-step="0" role="tab" aria-selected="true">1</button>
+      <button class="cstep" type="button" data-step="1" role="tab" aria-selected="false">2</button>
+      <button class="cstep" type="button" data-step="2" role="tab" aria-selected="false">3</button>
+      <button class="cstep" type="button" data-step="3" role="tab" aria-selected="false">4</button>
+    </div>
+
+    <div class="coach-pages">
+      <div class="coach-page is-on" data-page="0">
+        <div class="coach-art">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <ellipse cx="32" cy="49" rx="20" ry="4.5"/>
+            <path d="M15 31 C12 41 20 47 32 47 C44 47 52 41 49 31 A17 4 0 0 1 15 31 Z"/>
+            <ellipse cx="32" cy="31" rx="17" ry="4" class="ring"/>
+            <path d="M24 23c0-6 3.6-9 8-9s8 3 8 9" class="ring2"/>
+          </svg>
+        </div>
+        <p class="coach-h">一 · 按住香炉 1.8 秒</p>
+        <p class="coach-p">按住香炉，花瓣与金线会依次亮起。中途松手会取消；亮起完成后，第一缕烟会缓缓出现。</p>
+      </div>
+
+      <div class="coach-page" data-page="1">
+        <div class="coach-art">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="8" y="20" width="12" height="24" rx="2"/>
+            <rect x="26" y="20" width="12" height="24" rx="2" class="ring"/>
+            <rect x="44" y="20" width="12" height="24" rx="2"/>
+          </svg>
+        </div>
+        <p class="coach-h">二 · 三个界面各管一件事</p>
+        <p class="coach-p">今日看状态、调节配香方、记录翻旧账。左上角那排标签随时切，不用找菜单。</p>
+      </div>
+
+      <div class="coach-page" data-page="2">
+        <div class="coach-art">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <rect x="9" y="18" width="16" height="28" rx="3"/>
+            <path d="M14 28v3M20 28v3M14 36v3M20 36v3" class="ring2"/>
+            <rect x="33" y="18" width="22" height="20" rx="3" class="ring"/>
+            <path d="M38 44h12"/>
+          </svg>
+        </div>
+        <p class="coach-h">三 · 图标点开才是详情</p>
+        <p class="coach-p">左右四个图标只露一个数值——电量、余量、心率、香方。想看全，点它一下。</p>
+      </div>
+
+      <div class="coach-page" data-page="3">
+        <div class="coach-art">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="17"/>
+            <path d="M32 15 A17 17 0 0 1 32 49 Z" class="ring"/>
+            <circle cx="50" cy="50" r="6.5" class="ring2"/>
+          </svg>
+        </div>
+        <p class="coach-h">四 · 白天 / 夜间，还有桌宠</p>
+        <p class="coach-p">右上角或按 L 切换昼夜。调节页暂停后会保留剩余时间；点继续恢复，也可回到今日长按香炉重新点香。</p>
+      </div>
+    </div>
+
+    <div class="coach-nav">
+      <button class="coach-ghost" id="coachPrev" type="button">上一步</button>
+      <span class="coach-count" id="coachCount">1 / 4</span>
+      <button class="coach-ok" id="coachNext" type="button">下一步</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 昼夜切换的墨迹转场 -->
+<!-- 进门页 -->
+<div class="gate" id="gate" role="button" tabindex="0" aria-label="轻触入室">
+  <div class="gate-frame" aria-hidden="true"></div>
+
+  <!-- 回纹边饰 -->
+  <span class="gate-meander t" aria-hidden="true"></span>
+  <span class="gate-meander b" aria-hidden="true"></span>
+  <span class="gate-meander l" aria-hidden="true"></span>
+  <span class="gate-meander r" aria-hidden="true"></span>
+
+  <span class="gate-texture" aria-hidden="true"></span>
+  <span class="gate-plume" aria-hidden="true"></span>
+  <span class="gate-plume b" aria-hidden="true"></span>
+
+  <div class="gate-inner">
+    <p class="gate-kicker">非 遗 药 香 · 情 绪 关 怀</p>
+    <span class="gate-rule" aria-hidden="true"></span>
+    <h1 class="gate-title">闻息</h1>
+    <span class="gate-rule" aria-hidden="true"></span>
+    <p class="gate-sub">一炷烟起　万虑皆息</p>
+    <p class="gate-hint" id="gateHint">轻 触 入 室</p>
+  </div>
+
+  <!-- 卷末藏印 -->
+  <span class="gate-seal" aria-hidden="true">息</span>
+</div>
+<!-- 昼夜切换：墨迹化开（feTurbulence 扰动毛边） -->
+<svg class="ink-wipe" id="inkWipe" aria-hidden="true" viewBox="0 0 1000 900" preserveAspectRatio="none">
+  <defs>
+    <filter id="inkTurb" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.009" numOctaves="4" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="70" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+  </defs>
+  <g filter="url(#inkTurb)">
+    <circle id="inkHalo" cx="500" cy="430" r="6" fill="#ECE0C7" opacity=".45"/>
+    <circle id="inkBlob" cx="500" cy="430" r="6" fill="#ECE0C7"/>
+  </g>
+</svg>
+
+<!-- 轻提示 -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 桌宠挂载点（pet.js 填充） -->
+<div id="pet" class="pet" data-open="false" aria-hidden="true"></div>
+
+<noscript><p class="noscript">此 Demo 需要启用 JavaScript（全部逻辑本地运行）。</p></noscript>
+
+<script src="js/noise.js"></script>
+<script src="js/smoke.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/algorithm.js"></script>
+<script src="js/tcm.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/scentviz.js"></script>
+<script src="js/pet.js"></script>
+<script src="js/petpip.js"></script>
+<script src="js/botanical.js?v=20261108c"></script>
+<script src="js/interaction-art.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

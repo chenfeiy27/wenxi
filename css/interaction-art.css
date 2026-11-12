@@ -1,0 +1,100 @@
+/* Art integration: reversible overrides of the original layout. */
+.atmosphere-base { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.atmosphere-day, .atmosphere-night { position: absolute; inset: 0; transition: opacity 1.6s ease; }
+.atmosphere-day { background: radial-gradient(ellipse at 50% 14%, #F7EFDF 0%, #ECE0C7 52%, #DECEB0 100%); }
+.atmosphere-night { background: radial-gradient(ellipse 95% 76% at 50% 43%, #596570 0%, #515E69 24%, #46535E 51%, #3E4A54 73%, #3B4650 100%); }
+html[data-theme="day"] .atmosphere-night, html[data-theme="night"] .atmosphere-day { opacity: 0; }
+body::before { background: none; }
+.washes, .ink-wipe { display: none; }
+.censer-art { transition: opacity 1.6s ease; }
+html[data-theme="day"] .gate { background: #fff; }
+html[data-theme="day"] .gate::after { background: none; }
+html[data-theme="day"] .gate-title { color: #53656A; text-shadow: none; }
+html[data-theme="day"] .gate-sub { color: #7C8888; }
+html[data-theme="day"] .gate-kicker, html[data-theme="day"] .gate-hint { color: #8E8069; }
+html[data-theme="day"] .gate-plume, html[data-theme="day"] .gate-texture { opacity: .025; }
+.at-entrance .grain { opacity: 0; }
+.gate-inner { animation: entrance-reveal 6s ease both; }
+.gate-hint { animation: entrance-hint 6s ease both; }
+.gate.leaving .gate-inner { animation: none; }
+@keyframes entrance-reveal { 0% { opacity: 0; transform: translateY(8px); } 24%,100% { opacity: 1; transform: none; } }
+@keyframes entrance-hint { 0%,55% { opacity: 0; } 100% { opacity: .85; } }
+
+/* The transparent click-away surface stays; only the card has a background. */
+html .sheet, html .ref-sheet, .coach-dim { background: transparent !important; backdrop-filter: none; }
+.sheet-card { box-shadow: 0 16px 45px rgba(28,32,36,.14), inset 0 0 0 1px var(--line-strong); }
+.sheet .body-line { margin: 0 0 20px; font-size: 12px; line-height: 1.8; }
+.ref-inner { width: min(900px, 92vw); max-height: 84vh; overflow-y: auto; }
+.ref-kicker { font-size: 18px; letter-spacing: .25em; }
+.ref-tabs { display: flex; gap: 26px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.ref-tabs button { padding: 12px 4px; color: var(--mute); font: 14px var(--serif); letter-spacing: .15em; }
+.ref-tabs button[aria-pressed="true"] { color: var(--gold); border-bottom: 1px solid var(--gold); }
+.ref-game { min-height: 365px; }
+.coach-card { width: min(900px, 92vw); min-height: 570px; max-height: 84vh; overflow-y: auto; }
+.coach-close { position: absolute; top: 22px; right: 25px; color: var(--mute); font: 14px var(--serif); padding: 8px; }
+@media(max-height:700px) { .coach-card { min-height: 0; } }
+.rail { position: relative; }
+.rail-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: 26px; height: 50px; font: 24px var(--serif); color: var(--mute); border: 1px solid var(--line); border-radius: 14px; background: var(--panel-flat); z-index: 2; }
+.rail-left .rail-toggle { left: -33px; }
+.rail-right .rail-toggle { right: -33px; }
+.rail-btn { transition: opacity .3s ease, transform .3s ease, visibility .3s; }
+.rail.is-collapsed .rail-btn { opacity: 0; visibility: hidden; pointer-events: none; transform: translateX(-14px); }
+.rail-right.is-collapsed .rail-btn { transform: translateX(14px); }
+.rail-toggle:focus-visible { outline: 1px solid var(--gold); outline-offset: 3px; }
+
+/* Five original alpha masks retain their near/far and lighting differences. */
+.press-ring { display: none; }
+.ignition-glow { position: absolute; inset: 0; z-index: 3; pointer-events: none; background: #FFE2A1; opacity: 0; -webkit-mask: var(--glow-mask) center / contain no-repeat; mask: var(--glow-mask) center / contain no-repeat; filter: drop-shadow(0 0 3px rgba(255,221,150,.6)) drop-shadow(0 0 7px rgba(255,221,150,.25)); transition: opacity .16s ease; }
+.ignition-1 { --glow-mask: url('../assets/ignition/点香蒙版-01-底部花瓣.png'); }
+.ignition-2 { --glow-mask: url('../assets/ignition/点香蒙版-02-底部细线.png'); }
+.ignition-3 { --glow-mask: url('../assets/ignition/点香蒙版-03-炉盖金线.png'); }
+.ignition-4 { --glow-mask: url('../assets/ignition/点香蒙版-04-炉盖花瓣.png'); }
+.ignition-5 { --glow-mask: url('../assets/ignition/点香蒙版-05-顶部花蕾.png'); }
+.ignition-glow { background: none; -webkit-mask: none; mask: none; }
+.ignition-glow::before { content: ''; position: absolute; inset: 0; background: #FFE2A1; -webkit-mask: var(--glow-mask) center / contain no-repeat; mask: var(--glow-mask) center / contain no-repeat; }
+.is-pressing .ignition-1 { opacity: clamp(0, calc(var(--press, 0) * 3.5), .6); }
+.is-pressing .ignition-2 { opacity: clamp(0, calc((var(--press, 0) - .18) * 3), .75); }
+.is-pressing .ignition-3 { opacity: clamp(0, calc((var(--press, 0) - .43) * 3), .7); }
+.is-pressing .ignition-4 { opacity: clamp(0, calc((var(--press, 0) - .64) * 3), .6); }
+.is-igniting .ignition-glow { opacity: calc((1 - var(--ignition-tail, 0)) * .6); }
+.is-igniting .ignition-5 { animation: bud-glow 1s ease both; }
+.ignition-spark { position: absolute; z-index: 4; left: 50%; top: 15%; width: 3px; height: 3px; border-radius: 50%; background: #FFF1C2; box-shadow: 0 0 7px 2px rgba(255,232,175,.55); opacity: 0; pointer-events: none; }
+.is-igniting .spark-one { animation: spark-fall 850ms ease-in both; }
+.is-igniting .spark-two { animation: spark-fall 700ms 120ms ease-in both; margin-left: 5px; }
+@keyframes bud-glow { 0% { opacity: .1; } 35% { opacity: .72; } 100% { opacity: 0; } }
+@keyframes spark-fall { 0% { opacity: 0; transform: translate(-12px,-20px); } 25% { opacity: .85; } 80% { opacity: .6; } 100% { opacity: 0; transform: translate(0,14px) scale(.4); } }
+
+.botanical-background { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; container-type: inline-size; transition: opacity .8s ease, filter .8s ease; --flower-ink: #9B896E; --bamboo-ink: #82917E; --wing-ink: #A18B86; }
+html[data-theme="night"] .botanical-background { --flower-ink: #B9B9AE; --bamboo-ink: #A1B8AC; --wing-ink: #B6ABB6; }
+.botanical-field { position: absolute; inset: 0; opacity: .15; -webkit-mask-image: radial-gradient(ellipse 38% 60% at 50% 50%, transparent 0 48%, rgba(0,0,0,.06) 61%, rgba(0,0,0,.32) 76%, rgba(0,0,0,.72) 91%, #000 108%); mask-image: radial-gradient(ellipse 38% 60% at 50% 50%, transparent 0 48%, rgba(0,0,0,.06) 61%, rgba(0,0,0,.32) 76%, rgba(0,0,0,.72) 91%, #000 108%); }
+.botanical-accents { -webkit-mask-image: radial-gradient(ellipse 43% 65% at 50% 50%, transparent 0 70%, #000 105%); mask-image: radial-gradient(ellipse 43% 65% at 50% 50%, transparent 0 70%, #000 105%); }
+.botanical-sprig { position: absolute; display: block; left: var(--x); top: var(--y); width: var(--size); aspect-ratio: 1; transform: translate(-50%,-50%) rotate(var(--angle)); }
+.botanical-ink { position: absolute; inset: 0; background-color: var(--ink); -webkit-mask: var(--motif) center / contain no-repeat; mask: var(--motif) center / contain no-repeat; transition: background-color 1.6s ease; }
+.botanical-flower { --ink: var(--flower-ink); --motif: url('../assets/patterns/flower.png'); }
+.botanical-bamboo { --ink: var(--bamboo-ink); --motif: url('../assets/patterns/bamboo.png'); }
+.botanical-wings { --ink: var(--wing-ink); --motif: url('../assets/patterns/wings.png'); }
+.botanical-petals { --ink: var(--flower-ink); --motif: url('../assets/patterns/petals.png'); }
+.botanical-leaves { --ink: var(--bamboo-ink); --motif: url('../assets/patterns/leaves.png'); }
+.botanical-hover { position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; -webkit-mask-image: radial-gradient(circle 165px at var(--mx,-500px) var(--my,-500px), #000 0%, rgba(0,0,0,.5) 40%, transparent 100%); mask-image: radial-gradient(circle 165px at var(--mx,-500px) var(--my,-500px), #000 0%, rgba(0,0,0,.5) 40%, transparent 100%); }
+.botanical-hover .botanical-field { opacity: .27; }
+.botanical-background.is-hover .botanical-hover { opacity: 1; }
+.pointer-halo { position: absolute; inset: 0; opacity: 0; transition: opacity .65s ease; background: radial-gradient(circle 175px at var(--mx,-500px) var(--my,-500px), rgba(255,255,255,.15), transparent 85%); }
+html[data-theme="night"] .pointer-halo { background: radial-gradient(circle 175px at var(--mx,-500px) var(--my,-500px), rgba(186,217,240,.085), transparent 85%); }
+.botanical-background.is-hover .pointer-halo { opacity: 1; }
+body[data-view="adjust"] .botanical-background { opacity: .55; }
+body[data-view="adjust"] .botanical-motifs .botanical-sprig:nth-child(3n) { opacity: .35; }
+body[data-view="records"] .botanical-background { opacity: .38; filter: blur(3.5px); }
+@media(max-width:1100px) {
+  .rail-left .rail-toggle { left: -28px; } .rail-right .rail-toggle { right: -28px; }
+  .botanical-field { -webkit-mask-image: radial-gradient(ellipse 45% 61% at 50% 50%, transparent 0 47%, rgba(0,0,0,.12) 66%, #000 108%); mask-image: radial-gradient(ellipse 45% 61% at 50% 50%, transparent 0 47%, rgba(0,0,0,.12) 66%, #000 108%); }
+  .botanical-accents { -webkit-mask-image: radial-gradient(ellipse 48% 65% at 50% 50%, transparent 0 70%, #000 108%); mask-image: radial-gradient(ellipse 48% 65% at 50% 50%, transparent 0 70%, #000 108%); }
+}
+@media(max-width:680px) {
+  .rail-toggle { top: -30px; transform: none; width: 28px; height: 28px; }
+  .rail-left .rail-toggle { left: 0; } .rail-right .rail-toggle { right: 0; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .atmosphere-day,.atmosphere-night,.censer-art,.botanical-background,.botanical-ink,.botanical-hover,.pointer-halo { transition: none; }
+  .gate-inner,.gate-hint { animation: none; }
+  .ignition-glow,.ignition-spark { animation: none !important; }
+}

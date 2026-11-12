@@ -1,0 +1,998 @@
+/* ============================================================
+   闻息 v3 · pet.css — 桌面桌宠
+   ------------------------------------------------------------
+   形象：纯 CSS/SVG 的小铜炉（圆润炉身 + 一点暖光 + 一缕极淡的烟）
+   位置：右下角 fixed，可拖动；卡片向左上展开，贴边自动翻转
+   主题：只取 CSS 变量；暗夜是墨与金，白天是宣纸上的墨与金
+   ============================================================ */
+
+/* ============================================================
+   0. 主题令牌
+   全局变量优先（style.css 已定义），同时给出同款兜底，
+   保证单独打开本模块时也不会掉成纯黑底。
+   ============================================================ */
+
+#pet {
+  /* 尺寸 */
+  --pet-size: 76px;
+  --pet-card-w: 250px;
+
+  /* 全局主题令牌 */
+  --p-panel: var(--panel, #17140f);
+  --p-panel-2: var(--panel-2, #211c15);
+  --p-line: var(--line, rgba(201, 160, 99, .18));
+  --p-text: var(--text, #e6dcc8);
+  --p-dim: var(--text-dim, #b6aa92);
+  --p-mute: var(--mute, #8c8272);
+  --p-gold: var(--gold, #c9a063);
+  --p-gold-hi: var(--gold-hi, #e4c089);
+  --p-cinnabar: var(--cinnabar, #a63a2c);
+  --p-bamboo: var(--bamboo, #5e7a62);
+  --p-serif: var(--serif, "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif CJK SC", "SimSun", serif);
+  --p-sans: var(--sans, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif);
+  --p-ease: var(--ease-breath, cubic-bezier(.37, 0, .63, 1));
+
+  /* 材质局部令牌（随主题整体覆盖，不写死深色） */
+  --p-pot-hi: #8a6a3e;
+  --p-pot-mid: #52391f;
+  --p-pot-deep: #2e2013;
+  --p-pot-lo: #150e08;
+  --p-sheen: rgba(228, 192, 137, .12);
+  --p-shade: rgba(6, 4, 2, .22);
+  --p-mouth: #0b0704;
+  --p-ground: rgba(0, 0, 0, .42);
+  --p-halo-1: rgba(228, 160, 84, .34);
+  --p-halo-2: rgba(201, 160, 99, .10);
+  --p-halo-3: rgba(201, 160, 99, 0);
+  --p-ember-1: rgba(255, 231, 184, .98);
+  --p-ember-2: rgba(228, 160, 84, .55);
+  --p-ember-3: rgba(201, 160, 99, 0);
+  --p-glow-core: rgba(228, 160, 84, .20);
+  --p-glow-mid: rgba(201, 160, 99, .07);
+  --p-wisp-1: rgba(228, 192, 137, .42);
+  --p-wisp-2: rgba(228, 192, 137, .02);
+  --p-rim-1: rgba(228, 192, 137, .85);
+  --p-rim-2: rgba(201, 160, 99, .20);
+  --p-inscription: rgba(228, 192, 137, .18);
+
+  --p-card-bg:
+    radial-gradient(130% 96% at 16% -6%, rgba(201, 160, 99, .13), transparent 58%),
+    linear-gradient(166deg, rgba(31, 26, 20, .95), rgba(17, 14, 11, .97));
+  --p-card-line: rgba(201, 160, 99, .24);
+  --p-card-top-line: rgba(228, 192, 137, .55);
+  --p-card-shadow: 0 26px 64px -20px rgba(0, 0, 0, .78), 0 2px 8px rgba(0, 0, 0, .34);
+  --p-gold-soft: rgba(201, 160, 99, .14);
+  --p-gold-line: rgba(201, 160, 99, .34);
+  --p-foundation: rgba(233, 223, 198, .05);
+  --p-foundation-hover: rgba(233, 223, 198, .085);
+  --p-bubble-bg: rgba(26, 22, 17, .92);
+  --p-bubble-line: rgba(201, 160, 99, .22);
+  --p-bubble-shadow: 0 14px 34px -14px rgba(0, 0, 0, .7);
+  --p-text-shadow: 0 1px 12px rgba(0, 0, 0, .62);
+}
+
+/* 白天：宣纸上的墨与金 —— 炉身仍是深墨青铜，卡片是纸，烟是淡墨 */
+html[data-theme="day"] #pet {
+  --p-panel: var(--panel, #f4ebd8);
+  --p-panel-2: var(--panel-2, #ede2ca);
+  --p-line: var(--line, rgba(94, 74, 42, .18));
+  --p-text: var(--text, #2b2318);
+  --p-dim: var(--text-dim, #5c5240);
+  --p-mute: var(--mute, #8a7f6b);
+  --p-gold: var(--gold, #9a7638);
+  --p-gold-hi: var(--gold-hi, #b98e43);
+
+  --p-pot-hi: #7a5c33;
+  --p-pot-mid: #40301c;
+  --p-pot-deep: #241a10;
+  --p-pot-lo: #120c07;
+  --p-sheen: rgba(255, 236, 198, .16);
+  --p-shade: rgba(38, 26, 14, .24);
+  --p-mouth: #100a06;
+  --p-ground: rgba(74, 56, 30, .22);
+  --p-halo-1: rgba(190, 132, 52, .24);
+  --p-halo-2: rgba(160, 116, 54, .08);
+  --p-halo-3: rgba(160, 116, 54, 0);
+  --p-ember-1: rgba(255, 214, 148, .95);
+  --p-ember-2: rgba(206, 124, 48, .62);
+  --p-ember-3: rgba(160, 100, 40, 0);
+  --p-glow-core: rgba(206, 146, 62, .16);
+  --p-glow-mid: rgba(176, 132, 62, .06);
+  --p-wisp-1: rgba(104, 86, 56, .42);
+  --p-wisp-2: rgba(104, 86, 56, .02);
+  --p-rim-1: rgba(255, 236, 196, .92);
+  --p-rim-2: rgba(180, 136, 66, .36);
+  --p-inscription: rgba(60, 44, 24, .20);
+
+  --p-card-bg:
+    radial-gradient(130% 96% at 16% -6%, rgba(201, 160, 99, .20), transparent 60%),
+    linear-gradient(166deg, rgba(252, 247, 237, .97), rgba(240, 231, 212, .98));
+  --p-card-line: rgba(126, 98, 54, .26);
+  --p-card-top-line: rgba(154, 118, 56, .55);
+  --p-card-shadow: 0 22px 54px -22px rgba(78, 58, 28, .42), 0 1px 2px rgba(78, 58, 28, .16);
+  --p-gold-soft: rgba(154, 118, 56, .12);
+  --p-gold-line: rgba(148, 112, 52, .34);
+  --p-foundation: rgba(35, 27, 16, .045);
+  --p-foundation-hover: rgba(35, 27, 16, .08);
+  --p-bubble-bg: rgba(250, 245, 233, .96);
+  --p-bubble-line: rgba(126, 98, 54, .26);
+  --p-bubble-shadow: 0 12px 30px -14px rgba(78, 58, 28, .34);
+  --p-text-shadow: 0 1px 10px rgba(255, 252, 243, .9);
+}
+
+/* ============================================================
+   1. 根容器（挂载点）
+   ============================================================ */
+
+#pet {
+  position: fixed;
+  right: 20px;
+  bottom: clamp(16px, 3.6vh, 34px);
+  z-index: 18;              /* 高于主内容、低于顶栏 / 建议条 / 浮层 */
+  width: var(--pet-size);
+  height: var(--pet-size);
+  font-family: var(--p-serif);
+  color: var(--p-text);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  opacity: 1;
+  transform: none;
+  transition: opacity .5s var(--p-ease), transform .5s var(--p-ease), visibility 0s linear 0s;
+}
+
+#pet,
+#pet *,
+#pet *::before,
+#pet *::after {
+  box-sizing: border-box;
+}
+
+#pet.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(.96);
+  pointer-events: none;
+  transition: opacity .4s var(--p-ease), transform .4s var(--p-ease), visibility 0s linear .4s;
+}
+
+#pet.is-hidden .pet-figure,
+#pet.is-hidden .pet-caption,
+#pet.is-hidden .pet-card,
+#pet.is-hidden .pet-bubble {
+  pointer-events: none;
+}
+
+/* ============================================================
+   2. 小炉形象（纯 SVG + CSS）
+   ============================================================ */
+
+#pet .pet-figure {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: -webkit-grab;
+  cursor: grab;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  animation: pet-float 6.8s var(--p-ease) infinite;
+}
+
+#pet .pet-figure:active,
+#pet.is-dragging .pet-figure {
+  cursor: -webkit-grabbing;
+  cursor: grabbing;
+}
+
+#pet .pet-figure:focus-visible {
+  outline: 1px solid var(--p-gold-hi);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+#pet .pet-censer {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  transition: filter .45s var(--p-ease);
+}
+
+/* 悬停时炉身暖一度，像被看了一眼 */
+#pet .pet-figure:hover .pet-censer,
+#pet .pet-figure:focus-visible .pet-censer {
+  filter: brightness(1.07) saturate(1.06);
+}
+
+/* 炉身渐变（stop 颜色全部走变量） */
+#pet .pet-st { transition: none; }
+#pet .pot-hi { stop-color: var(--p-pot-hi); }
+#pet .pot-mid { stop-color: var(--p-pot-mid); }
+#pet .pot-deep { stop-color: var(--p-pot-deep); }
+#pet .pot-lo { stop-color: var(--p-pot-lo); }
+#pet .rim-1 { stop-color: var(--p-rim-1); }
+#pet .rim-2 { stop-color: var(--p-rim-2); }
+#pet .halo-1 { stop-color: var(--p-halo-1); }
+#pet .halo-2 { stop-color: var(--p-halo-2); }
+#pet .halo-3 { stop-color: var(--p-halo-3); }
+#pet .ember-1 { stop-color: var(--p-ember-1); }
+#pet .ember-2 { stop-color: var(--p-ember-2); }
+#pet .ember-3 { stop-color: var(--p-ember-3); }
+
+#pet .pet-halo {
+  opacity: .9;
+  animation: pet-halo-breathe 5.8s var(--p-ease) infinite;
+}
+
+#pet .pet-ground { fill: var(--p-ground); }
+#pet .pet-foot { fill: var(--p-pot-deep); }
+#pet .pet-ear {
+  fill: none;
+  stroke: var(--p-pot-hi);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: .92;
+}
+#pet .pet-sheen { fill: var(--p-sheen); }
+#pet .pet-shade { fill: var(--p-shade); }
+#pet .pet-mouth { fill: var(--p-mouth); }
+#pet .pet-inscription {
+  fill: none;
+  stroke: var(--p-inscription);
+  stroke-width: .8;
+  stroke-linecap: round;
+}
+#pet .pet-rim-line {
+  stroke-width: .9;
+  opacity: .9;
+}
+
+#pet .pet-ember {
+  opacity: .58;
+  animation: pet-ember-breathe 4.8s var(--p-ease) infinite;
+}
+
+/* 背后的一团暖光 */
+#pet .pet-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 128%;
+  height: 112%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 46%, var(--p-glow-core), var(--p-glow-mid) 46%, transparent 70%);
+  -webkit-filter: blur(8px);
+  filter: blur(8px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: .85;
+  animation: pet-glow-breathe 6.2s var(--p-ease) infinite;
+}
+
+/* 一缕极淡的烟：三条不等速的 CSS 烟雾 */
+#pet .pet-wisp {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 7px;
+  height: 26px;
+  margin-left: -3.5px;
+  border-radius: 60% 60% 40% 40%;
+  background: linear-gradient(to top, var(--p-wisp-1), var(--p-wisp-2) 72%, transparent);
+  -webkit-filter: blur(2.4px);
+  filter: blur(2.4px);
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: pet-wisp-rise 7.6s var(--p-ease) infinite;
+  pointer-events: none;
+}
+
+#pet .pet-wisp-a { left: calc(50% - 4px); animation-delay: -.2s; }
+#pet .pet-wisp-b {
+  left: calc(50% + 2px);
+  width: 6px;
+  margin-left: 0;
+  animation-delay: -3.2s;
+  animation-duration: 8.6s;
+}
+#pet .pet-wisp-c {
+  left: calc(50% - 1px);
+  width: 8px;
+  margin-left: 0;
+  animation-delay: -6.1s;
+  animation-duration: 7.2s;
+}
+
+/* 待机：余烟更慢、火种更暗；运行中：烟起得快一点 */
+#pet[data-run="false"] .pet-wisp { animation-duration: 15s; }
+#pet[data-run="false"] .pet-ember {
+  opacity: .4;
+  animation-duration: 6.6s;
+}
+#pet[data-run="true"] .pet-ember { opacity: 1; animation-duration: 3.4s; }
+
+/* 气息偏紧时，火种偏朱砂一点点（很克制，不给数字） */
+#pet[data-mood="tense"] .ember-2 { stop-color: var(--p-cinnabar); }
+#pet[data-mood="tense"] .pet-glow { opacity: .68; }
+
+/* 设备断连的小朱砂点：落在右侧炉耳的末端，像炉身上的小珠，不悬空 */
+#pet .pet-warn {
+  position: absolute;
+  top: 30%;
+  right: 6%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--p-cinnabar);
+  box-shadow: 0 0 9px var(--p-cinnabar);
+  opacity: 0;
+  transform: scale(.6);
+  pointer-events: none;
+  transition: opacity .35s ease, transform .35s var(--p-ease);
+}
+#pet[data-warn="true"] .pet-warn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ============================================================
+   3. 收起态：一句话 + 运行标记
+   ============================================================ */
+
+#pet .pet-caption {
+  position: absolute;
+  right: calc(100% + 2px);
+  bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 210px;
+  text-align: right;
+  cursor: pointer;
+  transition: opacity .45s var(--p-ease), transform .5s var(--p-ease);
+}
+
+#pet .pet-line {
+  font-size: 12.5px;
+  line-height: 1.55;
+  letter-spacing: .18em;
+  text-indent: .18em;
+  color: var(--p-dim);
+  text-shadow: var(--p-text-shadow);
+  transition: opacity .45s var(--p-ease), color .4s ease;
+}
+
+#pet:hover .pet-line { color: var(--p-text); }
+
+#pet.is-quiet .pet-line { opacity: 0; }
+
+/* setLine(text, ms) 到时间后淡出，悬停桌宠时再露出来 */
+#pet.is-faded .pet-line { opacity: 0; }
+#pet.is-faded:hover .pet-line { opacity: 1; }
+
+#pet .pet-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 2px;
+  background: var(--p-gold-soft);
+  box-shadow: inset 0 0 0 1px var(--p-gold-line);
+  color: var(--p-gold);
+  font-size: 9.5px;
+  line-height: 1.1;
+  letter-spacing: .16em;
+  text-indent: .16em;
+  white-space: nowrap;
+}
+
+#pet .pet-run-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--p-gold-hi);
+  box-shadow: 0 0 7px var(--p-gold-hi);
+  animation: pet-ember 2.6s ease-in-out infinite;
+}
+
+#pet[data-run="false"] .pet-run { display: none; }
+
+/* 卡片展开时，文案让位给卡片 */
+#pet[data-open="true"] .pet-caption {
+  opacity: 0;
+  transform: translateX(-4px);
+  pointer-events: none;
+}
+
+#pet.is-flip-x .pet-caption {
+  right: auto;
+  left: calc(100% + 2px);
+  align-items: flex-start;
+  text-align: left;
+}
+
+#pet.is-flip-x[data-open="true"] .pet-caption { transform: translateX(4px); }
+
+/* ============================================================
+   4. 展开态：快捷卡片
+   ============================================================ */
+
+#pet .pet-card {
+  position: absolute;
+  right: -4px;
+  bottom: calc(100% + 14px);
+  width: var(--pet-card-w);
+  max-width: calc(100vw - 24px);
+  padding: 13px 14px 12px;
+  border-radius: 3px;
+  background: var(--p-card-bg);
+  box-shadow: var(--p-card-shadow), inset 0 0 0 1px var(--p-card-line);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
+  backdrop-filter: blur(10px) saturate(1.06);
+  color: var(--p-text);
+  font-family: var(--p-serif);
+  text-align: left;
+  transform-origin: 76% 100%;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(7px) scale(.975);
+  pointer-events: none;
+  transition: opacity .24s linear, transform .34s var(--p-ease), visibility 0s linear .34s;
+}
+
+/* 只亮顶边的一道金线 */
+#pet .pet-card::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--p-card-top-line), transparent);
+  opacity: .8;
+  pointer-events: none;
+}
+
+/* 连向小炉的一根细线 */
+#pet[data-open="true"] .pet-card::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 22px;
+  width: 1px;
+  height: 14px;
+  background: linear-gradient(180deg, var(--p-card-line), transparent);
+  pointer-events: none;
+}
+
+#pet[data-open="true"] .pet-card {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  transition: opacity .24s linear, transform .34s var(--p-ease), visibility 0s linear 0s;
+}
+
+/* 贴边翻转：向左放不下就向右开，向上放不下就向下开 */
+#pet.is-flip-x .pet-card {
+  right: auto;
+  left: -4px;
+  transform-origin: 24% 100%;
+}
+#pet.is-flip-y .pet-card {
+  bottom: auto;
+  top: calc(100% + 14px);
+  transform-origin: 76% 0;
+  transform: translateY(-7px) scale(.975);
+}
+#pet.is-flip-x.is-flip-y .pet-card { transform-origin: 24% 0; }
+
+#pet.is-flip-y[data-open="true"] .pet-card::after {
+  top: auto;
+  bottom: 100%;
+  background: linear-gradient(0deg, var(--p-card-line), transparent);
+}
+#pet.is-flip-x[data-open="true"] .pet-card::after { right: auto; left: 22px; }
+
+/* ---- 卡片头 ---- */
+#pet .pet-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+
+#pet .pet-card-title {
+  position: relative;
+  padding-left: 10px;
+  color: var(--p-mute);
+  font-size: 10px;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  line-height: 1;
+}
+#pet .pet-card-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 50%;
+  background: var(--p-gold);
+}
+
+#pet .pet-close {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  margin: -4px -4px -4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--p-mute);
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease;
+}
+#pet .pet-close::before,
+#pet .pet-close::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 1px;
+  background: currentColor;
+}
+#pet .pet-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+#pet .pet-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+#pet .pet-close:hover { color: var(--p-gold-hi); background: var(--p-foundation); }
+#pet .pet-close:focus-visible {
+  outline: 1px solid var(--p-gold-hi);
+  outline-offset: 2px;
+}
+
+/* ---- 心率 / HRV ---- */
+#pet .pet-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+#pet .pet-metric { padding-bottom: 2px; }
+
+#pet .pet-metric + .pet-metric {
+  padding-left: 12px;
+  border-left: 1px solid var(--p-line);
+}
+
+#pet .pet-metric-label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--p-mute);
+  font-size: 9px;
+  letter-spacing: .22em;
+  line-height: 1;
+}
+
+#pet .pet-metric-val {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+}
+
+#pet .pet-metric-val b {
+  color: var(--p-text);
+  font-family: var(--p-serif);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+}
+
+#pet .pet-metric-val i {
+  color: var(--p-mute);
+  font-family: var(--p-sans);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: .1em;
+}
+
+/* ---- 气息（stress） ---- */
+#pet .pet-stress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+#pet .pet-stress-label {
+  color: var(--p-mute);
+  font-size: 9px;
+  letter-spacing: .2em;
+  line-height: 1;
+}
+
+#pet .pet-stress-bar {
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--p-line);
+  overflow: hidden;
+}
+
+#pet .pet-stress-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--p-bamboo), var(--p-gold));
+  transition: width .9s var(--p-ease);
+}
+
+#pet .pet-stress-word {
+  color: var(--p-dim);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  line-height: 1;
+}
+
+/* ---- 香薰运行 ---- */
+#pet .pet-scent {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid var(--p-line);
+}
+
+#pet .pet-scent-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#pet .pet-scent-name {
+  overflow: hidden;
+  color: var(--p-text);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#pet .pet-scent-remain {
+  flex: none;
+  color: var(--p-gold);
+  font-size: 10px;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+}
+
+#pet .pet-scent-bar {
+  margin-top: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--p-line);
+  overflow: hidden;
+}
+
+#pet .pet-scent-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--p-gold), var(--p-gold-hi));
+  transition: width .8s linear;
+}
+
+/* 运行中但没有进度数据：一条轻轻呼吸的金线，不编造百分比 */
+#pet.is-flow .pet-scent-bar i {
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--p-gold) 22%, var(--p-gold-hi) 50%, var(--p-gold) 78%, transparent);
+  animation: pet-glow-breathe 3.4s var(--p-ease) infinite;
+}
+
+#pet.no-progress .pet-scent-bar { display: none; }
+
+#pet .pet-scent-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 7px;
+}
+
+#pet .pet-scene {
+  padding: 2px 7px;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 1px var(--p-line);
+  color: var(--p-dim);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  line-height: 1.3;
+}
+
+#pet .pet-scent-state {
+  color: var(--p-mute);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+}
+
+/* ---- 腕表 / 香薰机连接点 ---- */
+#pet .pet-conns {
+  display: flex;
+  gap: 16px;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+
+#pet .pet-conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--p-dim);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  line-height: 1;
+}
+
+#pet .pet-conn i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--p-mute);
+  transition: background .3s ease, box-shadow .3s ease;
+}
+
+#pet .pet-conn[data-on="1"] i {
+  background: var(--p-bamboo);
+  box-shadow: 0 0 7px var(--p-bamboo);
+}
+
+#pet .pet-conn[data-on="0"] { color: var(--p-mute); }
+#pet .pet-conn[data-on="0"] i {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--p-mute);
+}
+
+/* ---- 打开网页 ---- */
+#pet .pet-web {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--p-gold-soft), transparent);
+  box-shadow: inset 0 0 0 1px var(--p-gold-line);
+  color: var(--p-gold-hi);
+  font-family: var(--p-serif);
+  font-size: 11px;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  cursor: pointer;
+  transition: background .25s ease, box-shadow .25s ease, color .25s ease;
+}
+
+#pet .pet-web:hover {
+  background: var(--p-foundation-hover);
+  box-shadow: inset 0 0 0 1px var(--p-gold);
+  color: var(--p-gold-hi);
+}
+
+#pet .pet-web:active { transform: translateY(1px); }
+
+#pet .pet-web:focus-visible {
+  outline: 1px solid var(--p-gold-hi);
+  outline-offset: 2px;
+}
+
+#pet .pet-web-arrow {
+  width: 11px;
+  height: 8px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .9;
+}
+
+/* ============================================================
+   5. 变化态：短暂气泡
+   ============================================================ */
+
+#pet .pet-bubble {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  width: max-content;
+  width: -webkit-max-content;
+  max-width: 238px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  background: var(--p-bubble-bg);
+  box-shadow: inset 0 0 0 1px var(--p-bubble-line), var(--p-bubble-shadow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--p-text);
+  font-family: var(--p-serif);
+  font-size: 11.5px;
+  line-height: 1.55;
+  letter-spacing: .06em;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity .3s ease, transform .34s var(--p-ease);
+}
+
+#pet.has-bubble .pet-bubble {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#pet.is-flip-x[data-open="false"] .pet-bubble {
+  right: auto;
+  left: 0;
+}
+
+/* 卡片展开时，气泡落在小炉下方，不抢卡片位置 */
+#pet[data-open="true"] .pet-bubble {
+  top: calc(100% + 12px);
+  bottom: auto;
+}
+
+#pet[data-open="true"].is-flip-y .pet-bubble {
+  top: auto;
+  bottom: calc(100% + 12px);
+}
+
+/* ============================================================
+   6. 拖动反馈
+   ============================================================ */
+
+#pet.is-dragging {
+  transition: none;
+}
+
+#pet.is-dragging .pet-caption {
+  opacity: .6;
+}
+
+#pet.is-dragging .pet-glow,
+#pet.is-dragging .pet-halo {
+  opacity: 1;
+}
+
+/* ============================================================
+   7. 动画关键帧
+   ============================================================ */
+
+@keyframes pet-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes pet-breathe {
+  0%, 100% { opacity: .72; }
+  50% { opacity: 1; }
+}
+
+@keyframes pet-glow-breathe {
+  0%, 100% { opacity: .66; }
+  50% { opacity: .95; }
+}
+
+@keyframes pet-halo-breathe {
+  0%, 100% { opacity: .72; }
+  50% { opacity: 1; }
+}
+
+@keyframes pet-ember-breathe {
+  0%, 100% { opacity: .5; }
+  50% { opacity: .95; }
+}
+
+@keyframes pet-ember {
+  0%, 100% { opacity: .45; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes pet-wisp-rise {
+  0% { opacity: 0; transform: translate3d(0, 6px, 0) scale(.55, .4); }
+  22% { opacity: .55; transform: translate3d(0, 0, 0) scale(.8, .9); }
+  58% { opacity: .4; transform: translate3d(-2.5px, -13px, 0) scale(1.05, 1.25); }
+  84% { opacity: .12; transform: translate3d(2px, -22px, 0) scale(1.3, 1.5); }
+  100% { opacity: 0; transform: translate3d(0, -26px, 0) scale(1.4, 1.6); }
+}
+
+/* ============================================================
+   8. 响应式
+   ============================================================ */
+
+@media (max-width: 620px) {
+  #pet {
+    --pet-size: 50px;
+    --pet-card-w: min(80vw, 232px);
+    right: 10px;
+    bottom: 12px;
+  }
+
+  #pet .pet-caption {
+    bottom: 4px;
+    max-width: 46vw;
+  }
+
+  #pet .pet-line {
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-indent: .12em;
+  }
+
+  #pet .pet-run {
+    padding: 3px 7px;
+    font-size: 9px;
+    letter-spacing: .12em;
+  }
+
+  #pet .pet-card { padding: 11px 12px 10px; }
+  #pet .pet-metric-val b { font-size: 22px; }
+  #pet .pet-bubble { max-width: 62vw; font-size: 11px; }
+}
+
+/* 高度很矮的窗口：卡片不做上/下翻转更保险 */
+@media (max-height: 520px) {
+  #pet .pet-card { padding: 10px 12px 9px; }
+  #pet .pet-stress { display: none; }
+}
+
+/* ============================================================
+   9. 减弱动效
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  #pet .pet-figure,
+  #pet .pet-glow,
+  #pet .pet-wisp,
+  #pet .pet-ember,
+  #pet .pet-halo,
+  #pet .pet-run-dot,
+  #pet.is-flow .pet-scent-bar i {
+    animation: none !important;
+  }
+
+  #pet .pet-figure { transform: none; }
+  #pet .pet-wisp {
+    opacity: .26;
+    transform: translate3d(0, -8px, 0) scale(.9, 1.05);
+  }
+  #pet .pet-ember { opacity: .9; }
+  #pet .pet-glow,
+  #pet .pet-halo { opacity: .8; }
+
+  #pet .pet-card,
+  #pet .pet-bubble,
+  #pet .pet-caption,
+  #pet .pet-line,
+  #pet .pet-stress-bar i,
+  #pet .pet-scent-bar i {
+    transition-duration: .12s !important;
+  }
+}

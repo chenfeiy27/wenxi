@@ -1,0 +1,53 @@
+
+/* Foil gold has dark edges, warm metal and a small, bright specular band. */
+.ignition-glow { filter: drop-shadow(0 0 2px rgba(225,173,65,.55)) drop-shadow(0 0 5px rgba(255,213,119,.24)); transition: opacity .2s ease; --foil-reveal: 0; }
+.ignition-glow::before,
+.ignition-glow::after { content: ''; position: absolute; inset: 0; -webkit-mask: var(--glow-mask) center / contain no-repeat; mask: var(--glow-mask) center / contain no-repeat; clip-path: inset(calc((1 - var(--foil-reveal)) * 100%) 0 0 0); }
+.ignition-glow::before {
+  background: linear-gradient(132deg, #805014 0%, #B37D27 16%, #E5BC64 30%, #FFF0B5 37%, #D7A33F 42%, #9A641E 54%, #F2D182 70%, #C48D33 86%, #8D5E20 100%);
+  background-size: 210% 210%;
+  background-position: calc(var(--press,0) * 100%) calc(var(--press,0) * 100%);
+}
+.ignition-glow::after {
+  background: linear-gradient(118deg, transparent 35%, rgba(255,248,213,.16) 42%, rgba(255,250,222,.95) 45%, rgba(255,248,213,.16) 48%, transparent 54%);
+  background-size: 240% 200%;
+  background-position: calc(var(--press,0) * 100%) calc(var(--press,0) * 100%);
+  opacity: .7;
+}
+.is-pressing .ignition-1 { --foil-reveal: clamp(0,calc(var(--press,0) * 5),1); opacity: .96; }
+.is-pressing .ignition-2 { --foil-reveal: clamp(0,calc((var(--press,0) - .16) * 4),1); opacity: 1; }
+.is-pressing .ignition-3 { --foil-reveal: clamp(0,calc((var(--press,0) - .42) * 4.3),1); opacity: 1; }
+.is-pressing .ignition-4 { --foil-reveal: clamp(0,calc((var(--press,0) - .64) * 4),1); opacity: .95; }
+.is-igniting .ignition-glow { --foil-reveal: 1; opacity: clamp(0,calc((1 - var(--ignition-tail,0)) * 1.7),1); }
+.is-igniting .ignition-glow::before { background-position: 100% 100%; }
+.is-igniting .ignition-glow::after { background-position: 100% 100%; }
+.is-igniting .ignition-5 { animation: bud-foil-glow 1s ease both; }
+@keyframes bud-foil-glow { 0% { opacity: .35; } 30% { opacity: 1; } 65% { opacity: .7; } 100% { opacity: 0; } }
+.ignition-spark { width: 4.5px; height: 4.5px; top: 15%; background: #FFF5CC; box-shadow: 0 0 5px 1px rgba(255,241,194,.95), 0 0 13px 4px rgba(244,205,116,.32); }
+.spark-one { --spark-x: -22px; --spark-y: -29px; --spark-end: 0px; }
+.spark-two { --spark-x: 18px; --spark-y: -35px; --spark-end: 0px; }
+.spark-three { --spark-x: -10px; --spark-y: -44px; --spark-end: 2px; width: 3.5px; height: 3.5px; }
+.spark-four { --spark-x: 30px; --spark-y: -24px; --spark-end: -2px; width: 3.5px; height: 3.5px; }
+.spark-five { --spark-x: -33px; --spark-y: -19px; --spark-end: 0px; width: 4px; height: 4px; }
+.is-igniting .spark-one { animation: foil-spark-fall 850ms ease-in both; }
+.is-igniting .spark-two { animation: foil-spark-fall 780ms 80ms ease-in both; margin-left: 0; }
+.is-igniting .spark-three { animation: foil-spark-fall 760ms 150ms ease-in both; }
+.is-igniting .spark-four { animation: foil-spark-fall 720ms 210ms ease-in both; }
+.is-igniting .spark-five { animation: foil-spark-fall 740ms 120ms ease-in both; }
+@keyframes foil-spark-fall {
+  0% { opacity: 0; transform: translate(var(--spark-x),var(--spark-y)) scale(.7); }
+  18% { opacity: 1; }
+  70% { opacity: .95; }
+  100% { opacity: 0; transform: translate(var(--spark-end),14px) scale(.35); }
+}
+/* Viewport units also work in browsers without container-query units. */
+@supports not (width:1cqw) { .botanical-sprig { width: var(--size-fallback); } }
+@media(prefers-reduced-motion:reduce) { .ignition-spark,.ignition-5 { animation: none !important; } }
+
+/* Petal interiors stay translucent; a separate metallic contour carries the foil. */
+.ignition-1::before,.ignition-4::before { opacity: .3; }
+.ignition-1::after,.ignition-4::after {
+  -webkit-mask-image: var(--foil-edge-mask); mask-image: var(--foil-edge-mask);
+  background: linear-gradient(128deg,#86521B 0%,#C99539 17%,#F1CF7A 32%,#FFF7D6 37%,#BB852B 43%,#8A561C 54%,#F5D88B 72%,#C18C32 87%,#956321 100%);
+  background-size: 210% 210%; opacity: 1;
+}

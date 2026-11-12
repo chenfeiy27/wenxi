@@ -1,0 +1,121 @@
+/* 美术接入第一轮：保留页面结构，接入昼夜插画与雾蓝灰夜色。 */
+html[data-theme="night"] {
+  --bg-0: #3B4650;
+  --bg-1: #44515C;
+  --bg-2: #4C5964;
+  --bg-radial: radial-gradient(ellipse 95% 76% at 50% 43%,
+    #596570 0%, #515E69 24%, #46535E 51%, #3E4A54 73%, #3B4650 100%);
+  --panel: rgba(61, 74, 86, .82);
+  --panel-2: rgba(66, 79, 91, .97);
+  --panel-drawer: #424F5B;
+  --panel-flat: rgba(58, 71, 82, .54);
+  --shadow: 0 26px 60px rgba(22, 30, 39, .24);
+  --shadow-sm: 0 12px 30px rgba(22, 30, 39, .18);
+  --grain-op: .024;
+  --wash-op: 0;
+  --vignette: radial-gradient(ellipse at 50% 43%, transparent 48%, rgba(26, 37, 48, .08) 100%);
+  --censer-ground-color: rgba(16, 25, 35, .17);
+}
+
+html[data-theme="day"] {
+  --censer-ground-color: rgba(96, 77, 55, .13);
+}
+
+/* 夜色中心亮区是全页背景，切到调节或记录也持续存在。 */
+html[data-theme="night"] .wash { animation: none; }
+html[data-theme="night"] .gate { background: var(--bg-radial); }
+html[data-theme="night"] .gate::after { background: var(--vignette); }
+html[data-theme="night"] .gate-title { text-shadow: 0 0 42px rgba(133, 156, 179, .16); }
+html[data-theme="night"] .ref-sheet,
+html[data-theme="night"] .coach-dim,
+html[data-theme="night"] .sheet {
+  background: rgba(36, 49, 63, .32);
+}
+
+/* 两张素材共用定位；通过主题切换淡入，长按交互仍由原状态机控制。 */
+.censer-wrap { isolation: isolate; }
+.censer-wrap::after { content: none; }
+.censer-wrap .censer-glow { display: none; }
+.censer-art {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  opacity: 0;
+  transition: opacity .65s ease;
+}
+html[data-theme="day"] .censer-art-day,
+html[data-theme="night"] .censer-art-night { opacity: 1; }
+
+/* PNG 的炉足位于画布高度约 85%；柔影独立成层，避免整只炉子被压暗。 */
+.censer-ground-shadow {
+  position: absolute;
+  left: 50%;
+  top: 82%;
+  z-index: 1;
+  width: 65%;
+  height: 8%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--censer-ground-color) 0%,
+    transparent 72%);
+  filter: blur(5px);
+  pointer-events: none;
+}
+.censer-smoke-origin {
+  position: absolute;
+  left: 52%;
+  top: 18%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.censer-wrap .press-ring { z-index: 0; }
+.censer-wrap .press-fill {
+  stroke-dasharray: 1105.84;
+  stroke-dashoffset: calc(1105.84 * (1 - var(--press, 0)));
+  transform-origin: 200px 205px;
+}
+.censer-hint { z-index: 3; }
+body:not([data-view="today"]) .smoke { visibility: hidden; }
+
+/* 页内小炉复用同一组素材；保留原来的卡片、拖动和状态更新。 */
+#pet .pet-censer { visibility: hidden; }
+#pet .pet-figure::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: url("../assets/censer/day.png") center / contain no-repeat;
+  pointer-events: none;
+}
+html[data-theme="night"] #pet .pet-figure::before {
+  background-image: url("../assets/censer/night.png");
+}
+#pet .pet-figure::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 82%;
+  width: 64%;
+  height: 8%;
+  background: radial-gradient(ellipse, var(--censer-ground-color), transparent 72%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+html[data-theme="night"] #pet .pet-glow { opacity: 0; }
+html[data-theme="night"] #pet {
+  --p-wisp-1: rgba(189, 210, 224, .35);
+  --p-wisp-2: rgba(189, 210, 224, .02);
+  --p-card-bg: linear-gradient(166deg, #46535F, #3B4854);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .censer-art { transition: none; }
+}
