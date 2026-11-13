@@ -74,6 +74,8 @@
 
     hrPill: $('#hrPill'), scentPill: $('#scentPill'), bodyLine: $('#bodyLine'),
     tcmTag: $('#tcmTag'), tcmNote: $('#tcmNote'), tcmWhy: $('#tcmWhy'),
+    tcmConf: $('#tcmConf'), tcmBasis: $('#tcmBasis'), scentRoles: $('#scentRoles'),
+    safetyBar: $('#safetyBar'), safetyText: $('#safetyText'), safetyClose: $('#safetyClose'),
     watchPill: $('#watchPill'), diffPill: $('#diffPill'),
     railBtns: $$('.rail-btn'),
     sheet: $('#sheet'), sheetClose: $('#sheetClose'),
@@ -118,6 +120,10 @@
     entered: false,
     tcm: { key: 'heping', name: '平和', note: '气血调匀', why: '', mix: null },
     tcmSame: 0,
+    spo2: 97,
+    spo2Hist: [],
+    safetyOpen: false,
+    safetyUntil: 0,
     lit: false,
     mode: null,
     status: 'normal',
@@ -602,6 +608,9 @@
     state.hr = raw.hr;
     state.hrv = raw.hrv;
     state.activity = raw.activity;
+    state.spo2 = raw.spo2;
+    state.spo2Hist.push(raw.spo2);
+    if (state.spo2Hist.length > 8) state.spo2Hist.shift();
 
     var score = Algorithm.stressScore(raw, BASELINE);
     state.stress += (score - state.stress) * .4;
@@ -626,6 +635,16 @@
         }
       }
       if (state.tcm.key === 'heping' && tcmNext.key === 'heping') state.tcmSame = 0;
+    }
+
+    // 反证优先（文档 §4.2 规则三 / 场景 3.6）：血氧异常优先于一切中医判定
+    if (window.TCM && TCM.safetyCheck) {
+      var safe = TCM.safetyCheck(state.spo2Hist);
+      if (safe) {
+        if (!state.safetyOpen) showSafety(safe.text);
+      } else if (state.safetyOpen && Date.now() > state.safetyUntil) {
+        hideSafety();
+      }
     }
 
     if (el.hr) el.hr.textContent = String(Math.round(state.hr));
@@ -673,13 +692,40 @@
 
     // 右侧徽记只露一个数、一个词
     if (el.hrPill) el.hrPill.textContent = String(Math.round(state.hr));
-    if (el.tcmTag) {
+    if (state.safetyOpen) {
+      // 反证优先：风险信号期间不输出中医状态，只提示就医
+      if (el.tcmTag) {
+        el.tcmTag.textContent = '暂不判断';
+        el.tcmTag.classList.remove('is-calm');
+        el.tcmTag.classList.add('is-alert');
+      }
+      if (el.tcmConf) el.tcmConf.textContent = '安全网';
+      if (el.tcmNote) el.tcmNote.textContent = '建议就医评估';
+      if (el.tcmWhy) el.tcmWhy.textContent = '血氧异常期间不做中医状态判断';
+      if (el.tcmBasis) el.tcmBasis.textContent = '判定依据：血氧 ' + Math.round(state.spo2) + '% · 建议咨询医生';
+      if (el.scentRoles) el.scentRoles.textContent = '暂不供香';
+    } else if (el.tcmTag) {
       el.tcmTag.textContent = state.tcm.name;
       el.tcmTag.classList.toggle('is-alert', state.tcm.key !== 'heping' && state.tcm.key !== 'xingzhi');
       el.tcmTag.classList.toggle('is-calm', state.tcm.key === 'heping');
     }
-    if (el.tcmNote) el.tcmNote.textContent = state.tcm.note;
-    if (el.tcmWhy) el.tcmWhy.textContent = '中医状态：' + state.tcm.name + ' · ' + state.tcm.note;
+    if (!state.safetyOpen && el.tcmNote) el.tcmNote.textContent = state.tcm.note;
+    if (!state.safetyOpen && el.tcmConf) el.tcmConf.textContent = state.tcm.confidenceText || '';
+    if (!state.safetyOpen && el.tcmWhy) {
+      el.tcmWhy.textContent = '中医状态倾向：' + state.tcm.name +
+        (state.tcm.confidenceText ? '（' + state.tcm.confidenceText + '）' : '') +
+        ' · ' + state.tcm.note;
+    }
+    if (!state.safetyOpen && el.tcmBasis) {
+      var basis = (state.tcm.evidence && state.tcm.evidence.length)
+        ? state.tcm.evidence.join(' · ')
+        : (state.tcm.why || '数据不足，暂不判断');
+      el.tcmBasis.textContent = '判定依据：' + basis +
+        ' · 血氧 ' + Math.round(state.spo2) + '%';
+    }
+    if (!state.safetyOpen && el.scentRoles && window.TCM) {
+      el.scentRoles.textContent = TCM.rolesText(state.tcm) || '暂不供香';
+    }
     if (el.bodyLine) {
       el.bodyLine.textContent = '心率 ' + Math.round(state.hr) +
         ' · HRV ' + Math.round(state.hrv) +
@@ -706,6 +752,31 @@
         line: petLine(), remain: petRemain()
       });
     }
+  }
+
+  /* ---------- 安全网：血氧异常 → 就医提示，暂停调理话术 ---------- */
+  function showSafety(text) {
+    if (!el.safetyBar) return;
+    state.safetyOpen = true;
+    state.safetyUntil = Date.now() + 9000;
+    el.safetyText.textContent = text;
+    el.safetyBar.classList.add('is-on');
+    el.safetyBar.setAttribute('aria-hidden', 'false');
+    hideSuggest();
+    logEvent('安全网提示 · 血氧下降');
+    if (el.tcmTag) {
+      el.tcmTag.textContent = '暂不判断';
+      el.tcmTag.classList.remove('is-calm');
+      el.tcmTag.classList.add('is-alert');
+    }
+    if (el.tcmConf) el.tcmConf.textContent = '安全网';
+  }
+
+  function hideSafety() {
+    if (!el.safetyBar || !state.safetyOpen) return;
+    state.safetyOpen = false;
+    el.safetyBar.classList.remove('is-on');
+    el.safetyBar.setAttribute('aria-hidden', 'true');
   }
 
   function updateDevicePanel() {
@@ -1224,6 +1295,7 @@
       })(el.railBtns[r]);
     }
     if (el.sheetClose) el.sheetClose.addEventListener('click', closeSheet);
+    if (el.safetyClose) el.safetyClose.addEventListener('click', hideSafety);
     if (el.sheet) {
       el.sheet.addEventListener('click', function (e) { if (e.target === el.sheet) closeSheet(); });
     }

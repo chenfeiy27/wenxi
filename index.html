@@ -110,7 +110,7 @@
         <p class="verse" aria-hidden="true">一炷烟起　万虑皆息</p>
 
         <p class="state-line" id="stateLine">此刻 · 香冷</p>
-        <p class="tcm-line" id="tcmLine"><span class="tcm-tag" id="tcmTag">平和</span><span class="tcm-note" id="tcmNote">气血调匀</span></p>
+        <p class="tcm-line" id="tcmLine"><span class="tcm-tag" id="tcmTag">平和</span><span class="tcm-note" id="tcmNote">气血调匀</span><span class="tcm-conf" id="tcmConf">中等置信</span></p>
         <button class="link-btn" id="btnDetail" type="button">看见身体信号 →</button>
       </div>
 
@@ -154,16 +154,19 @@
             <span><b id="hrv">62</b><i>ms · HRV</i></span>
           </div>
           <svg id="miniTrend" class="sheet-trend" viewBox="0 0 240 54" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <p class="sheet-note" id="tcmBasis">判定依据：—</p>
           <p class="sheet-note">近 30 分钟 · <span id="dataTime">更新于 17:02</span> · 只看趋势，不做诊断</p>
         </div>
 
         <div class="sheet-panel" data-panel="scent">
           <p class="sheet-title">当前香方</p>
           <p class="sheet-lead" id="scentName">沉香 · 竹青 · 龙脑</p>
-          <p class="sheet-meta" id="tcmWhy">中医状态：平和 · 气血调匀</p>
+          <p class="sheet-meta" id="tcmWhy">中医状态倾向：平和（中等置信）· 气血调匀</p>
+          <p class="sheet-note" id="scentRoles">君 沉香 · 臣 竹青 · 佐使 龙脑</p>
           <div class="scent-chips" id="scentChips"></div>
           <div class="scent-thin" id="scentThin" aria-hidden="true"></div>
           <p class="sheet-meta" id="scentRemain">尚未开始</p>
+          <p class="sheet-note tip">结果仅供参考，不作为诊断依据。孕妇、哺乳期、3 岁以下婴幼儿、哮喘、癫痫及香精过敏者请勿使用；单次连续使用不超过 60 分钟。</p>
           <div class="scent-actions">
             <button class="mini-btn" id="btnPause" type="button">暂停</button>
             <button class="mini-btn strong" id="btnGotoAdjust" type="button">去调节</button>
@@ -264,6 +267,12 @@
 </main>
 
 <!-- 建议条（半自动/自动时出现） -->
+<div class="safety" id="safetyBar" aria-hidden="true" role="alert">
+  <span class="safety-dot" aria-hidden="true"></span>
+  <span class="safety-text" id="safetyText">检测到血氧短时下降 · 建议必要时就医评估</span>
+  <button class="safety-close" id="safetyClose" type="button">知道了</button>
+</div>
+
 <div class="suggest" id="suggestBar" aria-hidden="true">
   <span class="suggest-text" id="suggestText">系统建议：竹青 +8%、龙脑 −4%</span>
   <span class="suggest-btns">
@@ -277,6 +286,10 @@
   <div class="ref-inner">
     <header class="ref-head"><span class="ref-kicker">香事</span><button id="refClose" class="ref-close" type="button">合上</button></header>
     <div class="ref-body">
+      <p class="ref-lead">使用边界</p>
+      <p class="ref-meta">健康管理工具，不构成医疗建议。中医状态为「倾向 + 置信度」的参考提示，<b>不是证候诊断</b>；本产品不做脉诊，只做心率与自主神经状态的连续观察。如有持续不适，请及时就医。</p>
+      <p class="ref-meta">香氛禁忌：孕妇与哺乳期、3 岁以下婴幼儿、哮喘或慢阻肺、癫痫、已知香精过敏者请勿使用；养猫家庭请隔离宠物或选择无香模式。单次连续使用不超过 60 分钟。</p>
+      <p class="ref-meta">若你正处于情绪危机，请联系心理援助热线 <b>12356</b>，或联系身边可信任的人陪同。</p>
       <p class="ref-lead">传统香制作技艺</p>
       <p class="ref-meta">国家级非物质文化遗产 · 编号 <b>Ⅷ-224</b><br>（含药香制作技艺 · 北京西城）</p>
       <p class="ref-label">香篆八步</p>
@@ -383,6 +396,7 @@
     <span class="gate-rule" aria-hidden="true"></span>
     <p class="gate-sub">一炷烟起　万虑皆息</p>
     <p class="gate-hint" id="gateHint">轻 触 入 室</p>
+    <p class="gate-fine">健康管理工具 · 不构成医疗建议 · 数据仅在本机处理</p>
   </div>
 
   <!-- 卷末藏印 -->
