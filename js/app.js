@@ -120,6 +120,8 @@
     entered: false,
     tcm: { key: 'heping', name: '平和', note: '气血调匀', why: '', mix: null },
     tcmSame: 0,
+    demoMode: false,
+    demoStart: 0,
     spo2: 97,
     spo2Hist: [],
     safetyOpen: false,
@@ -599,12 +601,78 @@
   }
 
   /* ---------- 数据 ---------- */
+  /* ---------- 演示模式（录屏 / 答辩用：一键自动跑完整流程） ----------
+     按 D 开始或停止；数据由脚本驱动，与墙钟对齐，不受帧率影响。
+     流程：点火 → 压力上升 → 弹出休息邀请 → 自动接受 → 切夜间 → 桌宠 → 结束 */
+  var DEMO_LINE = [
+    [0,  68, 62, .20],
+    [6,  70, 60, .20],
+    [12, 86, 32, .30],
+    [24, 87, 30, .30],
+    [28, 71, 56, .20],
+    [36, 68, 60, .20]
+  ];
+  var demoTimers = [];
+
+  function demoSample() {
+    var t = (performance.now() - (state.demoStart || performance.now())) / 1000;
+    for (var i = 0; i < DEMO_LINE.length - 1; i++) {
+      var A = DEMO_LINE[i], B = DEMO_LINE[i + 1];
+      if (t >= A[0] && t <= B[0]) {
+        var k = (t - A[0]) / Math.max(1, B[0] - A[0]);
+        return {
+          hr: A[1] + (B[1] - A[1]) * k,
+          hrv: A[2] + (B[2] - A[2]) * k,
+          activity: A[3] + (B[3] - A[3]) * k,
+          spo2: 97
+        };
+      }
+    }
+    var L = DEMO_LINE[DEMO_LINE.length - 1];
+    return { hr: L[1], hrv: L[2], activity: L[3], spo2: 97 };
+  }
+
+  function stopDemo() {
+    state.demoMode = false;
+    for (var i = 0; i < demoTimers.length; i++) window.clearTimeout(demoTimers[i]);
+    demoTimers = [];
+    showToast('演示模式已停止');
+  }
+
+  function startDemo() {
+    if (state.demoMode) { stopDemo(); return; }
+    state.demoMode = true;
+    state.demoStart = performance.now();
+    if (state.view !== 'today') setView('today');
+    if (state.suggestOpen) hideSuggest();
+    if (!state.lit) { try { ignite(); } catch (e) {} }
+    showToast('演示模式 · 按 D 停止');
+
+    var acts = [
+      [15000, function () {
+        state.suggestTick = 99;
+        state.auto = 'semi';
+        try { maybeSuggest(); } catch (e) {}
+      }],
+      [21000, function () { try { acceptSuggest(); } catch (e) {} }],
+      [33000, function () { setView('today'); }],
+      [38000, function () { try { toggleTheme(); } catch (e) {} }],
+      [45000, function () { try { togglePet(); } catch (e) {} }],
+      [54000, function () { state.demoMode = false; showToast('演示结束'); }]
+    ];
+    for (var j = 0; j < acts.length; j++) {
+      (function (act) {
+        demoTimers.push(window.setTimeout(function () { if (state.demoMode) act[1](); }, act[0]));
+      })(acts[j]);
+    }
+  }
+
   function tickData(dt) {
     state.dataAcc += dt;
     if (state.dataAcc < 0.5) return;
     state.dataAcc = 0;
 
-    var raw = Simulator.sampleAt(state.clock);
+    var raw = state.demoMode ? demoSample() : Simulator.sampleAt(state.clock);
     state.hr = raw.hr;
     state.hrv = raw.hrv;
     state.activity = raw.activity;
@@ -1389,6 +1457,7 @@
       if (k === 'enter' || e.key === ' ') { e.preventDefault(); hideCoach(); }
       return;
     }
+    if (k === 'd') { startDemo(); return; }
     if (k === 'l') { toggleTheme(); return; }
     if (k === 'p') { togglePet(); return; }
     if (k === 'm') { toggleSound(); return; }
@@ -1509,6 +1578,8 @@
     coach: function (on) { if (on === false) hideCoach(); else showCoach(); },
     pet: togglePet,
     enter: enterApp,
+    demo: startDemo,
+    stopDemo: stopDemo,
     tcm: function (hr, hrv, act, hour) { return TCM.classify({ hr: hr, hrv: hrv, activity: act }, BASELINE, { hour: hour, stress: state.stress }); },
     ref: function (on) { if (on === false) closeRef(); else openRef(); }
   };

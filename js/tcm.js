@@ -120,6 +120,10 @@ const TCM = (() => {
       items: {
         nightHrUp: { met: night && hrUp >= TH.hrUpNight, text: '夜间心率 +' + Math.round(hrUp) + ' bpm' },
         dayHrUp: { met: !night && hrUp >= TH.hrUpDay, text: '日间心率 +' + Math.round(hrUp) + ' bpm' },
+        hrUpAny: {
+          met: (night && hrUp >= TH.hrUpNight) || (!night && hrUp >= TH.hrUpDay),
+          text: (night ? '夜间' : '日间') + '心率 +' + Math.round(hrUp) + ' bpm'
+        },
         hrvDeep: { met: hrvPct >= TH.hrvPctDeep, text: '变异性 −' + Math.round(clamp(hrvPct, 0, 90)) + '%' },
         hrvMid: { met: hrvPct >= TH.hrvPctMid, text: '变异性 −' + Math.round(clamp(hrvPct, 0, 90)) + '%' },
         hrvWeak: { met: hrvPct >= TH.hrvPctWeak, text: '调节储备 −' + Math.round(clamp(hrvPct, 0, 90)) + '%' },
@@ -136,7 +140,7 @@ const TCM = (() => {
      心火要求"心率升幅更大 + 变异性更低"，阴虚则是"轻微升高 + 中等下降"。 */
   const RULES = [
     { key: 'yangxu', core: ['hrLow'], need: ['veryStill', 'still'], min: 2 },
-    { key: 'xinhuo', core: ['nightHrUp'], need: ['hrvDeep', 'still', 'dayHrUp'], min: 2 },
+    { key: 'xinhuo', core: ['hrUpAny'], need: ['hrvDeep', 'still'], min: 3 },
     { key: 'yinxu', core: ['nightHrUp'], need: ['hrvMid', 'still'], min: 2 },
     { key: 'qixue', core: ['hrvWeak'], need: ['hrFlat', 'still'], min: 2 }
   ];
@@ -191,7 +195,7 @@ const TCM = (() => {
       r.need.forEach((k) => {
         if (fp.items[k] && fp.items[k].met) hitItems.push(fp.items[k].text);
       });
-      if (hitItems.length >= r.min + (r.core ? r.core.length : 0)) {
+      if (hitItems.length >= r.min) {
         const st = STATES[r.key];
         const conf = confLevel(hitItems.length);
         return Object.assign({}, st, {
@@ -216,7 +220,7 @@ const TCM = (() => {
     }
 
     return Object.assign({}, STATES.unknown, {
-      key: 'unknown', confidence: 'low', confidenceText: '数据不足', evidence: [], fp: base
+      key: 'unknown', confidence: 'low', confidenceText: '—', evidence: [], fp: base
     });
   }
 
