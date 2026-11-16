@@ -3,6 +3,10 @@
    《香事》浮层里的「解压小游戏」：4-7-8 呼吸引导（三轮）
    依据《02 用户场景说明书》场景三：屏显圆环引导 4-7-8 呼吸，共 3 轮。
    定位：低风险、可逆、非药物的感官调节，不构成任何治疗建议。
+
+   附：篆印收集（游戏化反馈）
+   每完成一次完整练习（三轮）盖一枚「篆」，每日上限三枚；
+   三枚集满 → 「一篆终」，呼应香篆本体，也给回访一个理由。
    ============================================================ */
 (function () {
   'use strict';
@@ -32,6 +36,7 @@
     '    </div>',
     '  </div>',
     '  <p class="bg-round" id="bgRound">第 1 / ' + ROUNDS + ' 轮</p>',
+    '  <div class="bg-seals" id="bgSeals" aria-label="今日香篆"></div>',
     '  <div class="bg-actions">',
     '    <button class="mini-btn strong" id="bgStart" type="button">开始</button>',
     '    <button class="mini-btn" id="bgReset" type="button">重来</button>',
@@ -46,15 +51,62 @@
   var phaseEl = host.querySelector('#bgPhase');
   var countEl = host.querySelector('#bgCount');
   var roundEl = host.querySelector('#bgRound');
+  var sealsEl = host.querySelector('#bgSeals');
   var startBtn = host.querySelector('#bgStart');
   var resetBtn = host.querySelector('#bgReset');
 
   var running = false;
   var t0 = 0;
-  var base = 0;          // 已累计秒数（暂停时保留）
+  var base = 0;
   var raf = 0;
   var done = false;
 
+  /* ---------- 篆印收集 ---------- */
+  var MAX_SEAL = 3;
+  var SEAL_KEYS = ['壹', '贰', '叁'];
+
+  function todayKey() {
+    var d = new Date();
+    return 'wx_seal_' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function loadSeals() {
+    var n = 0;
+    try { n = parseInt(localStorage.getItem(todayKey()) || '0', 10) || 0; } catch (e) { n = 0; }
+    return Math.max(0, Math.min(MAX_SEAL, n));
+  }
+  function saveSeals(n) {
+    try { localStorage.setItem(todayKey(), String(n)); } catch (e) { /* noop */ }
+  }
+
+  var sealCount = loadSeals();
+  var freshSeal = -1;
+
+  function renderSeals() {
+    if (!sealsEl) return;
+    var html = '<span class="bg-seal-label">今日香篆</span>';
+    for (var i = 0; i < MAX_SEAL; i++) {
+      var on = i < sealCount;
+      var fresh = i === freshSeal;
+      html += '<span class="bg-seal' + (on ? ' is-on' : '') + (fresh ? ' is-fresh' : '') + '">' +
+              (on ? SEAL_KEYS[i] : '') + '</span>';
+    }
+    if (sealCount >= MAX_SEAL) {
+      html += '<span class="bg-seal-done">一篆终</span>';
+    } else {
+      html += '<span class="bg-seal-hint">集满三篆</span>';
+    }
+    sealsEl.innerHTML = html;
+  }
+
+  function addSeal() {
+    if (sealCount >= MAX_SEAL) return;
+    sealCount += 1;
+    freshSeal = sealCount - 1;
+    saveSeals(sealCount);
+    renderSeals();
+  }
+
+  /* ---------- 呼吸引导 ---------- */
   function paint(t) {
     var total = Math.min(t, TOTAL);
     prog.setAttribute('stroke-dashoffset', (CIRC * (1 - total / TOTAL)).toFixed(1));
@@ -92,6 +144,7 @@
     roundEl.textContent = '三轮已满 · 一篆终';
     prog.setAttribute('stroke-dashoffset', '0');
     core.style.transform = 'scale(0.72)';
+    addSeal();
   }
 
   function reset() {
@@ -109,7 +162,6 @@
 
   function loop(now) {
     if (!running) return;
-    // 浮层关闭或切到别的页就自动暂停
     var sheet = document.getElementById('refSheet');
     var open = sheet && sheet.classList.contains('is-on');
     if (!open || host.hidden) {
@@ -144,6 +196,12 @@
   });
   resetBtn.addEventListener('click', reset);
 
-  // 打开《香事》时停在上次进度，关闭时由 loop 自动暂停
+  renderSeals();
   reset();
+
+  /* 调试/演示：直接结算一次，便于验收与录制 */
+  window.__bgGame = {
+    finish: function () { if (running) { if (raf) cancelAnimationFrame(raf); raf = 0; } running = false; paint(TOTAL); finish(); },
+    seals: function () { return sealCount; }
+  };
 })();
