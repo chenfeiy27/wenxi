@@ -768,6 +768,7 @@
         el.tcmTag.classList.add('is-alert');
       }
       if (el.tcmConf) el.tcmConf.textContent = '安全网';
+      document.documentElement.setAttribute('data-state', 'safety');
       if (el.tcmNote) el.tcmNote.textContent = '建议就医评估';
       if (el.tcmWhy) el.tcmWhy.textContent = '血氧异常期间不做中医状态判断';
       if (el.tcmBasis) el.tcmBasis.textContent = '判定依据：血氧 ' + Math.round(state.spo2) + '% · 建议咨询医生';
@@ -779,6 +780,12 @@
     }
     if (!state.safetyOpen && el.tcmNote) el.tcmNote.textContent = state.tcm.note;
     if (!state.safetyOpen && el.tcmConf) el.tcmConf.textContent = state.tcm.confidenceText || '';
+
+    // 状态配色：整页只有「状态色」这一处随身体状态变化
+    if (state._stateKey !== state.tcm.key) {
+      state._stateKey = state.tcm.key;
+      document.documentElement.setAttribute('data-state', state.tcm.key || 'heping');
+    }
     if (!state.safetyOpen && el.tcmWhy) {
       el.tcmWhy.textContent = '中医状态倾向：' + state.tcm.name +
         (state.tcm.confidenceText ? '（' + state.tcm.confidenceText + '）' : '') +

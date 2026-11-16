@@ -1611,3 +1611,37 @@ html[data-theme="day"] .press-track { stroke: rgba(80, 62, 40, .16); }
   color: var(--mute);
   opacity: .78;
 }
+
+
+/* ============================================================
+   状态色系统：五个中医状态各一种色相，整页只有这一处随状态变化
+   平和 竹青 / 心火 朱砂 / 气血 赭金 / 阴虚 墨紫 / 阳虚 靛青
+   ============================================================ */
+html {
+  --state-color: var(--bamboo);
+  --state-line: rgba(94, 122, 98, .42);
+}
+html[data-state="heping"]  { --state-color: var(--bamboo);  --state-line: rgba(94, 122, 98, .42); }
+html[data-state="xinhuo"]  { --state-color: #A63A2C;        --state-line: rgba(166, 58, 44, .48); }
+html[data-state="qixue"]   { --state-color: #B07B33;        --state-line: rgba(176, 123, 51, .46); }
+html[data-state="yinxu"]   { --state-color: #6B5B8C;        --state-line: rgba(107, 91, 140, .48); }
+html[data-state="yangxu"]  { --state-color: #4A6B7C;        --state-line: rgba(74, 107, 124, .48); }
+html[data-state="xingzhi"] { --state-color: #8A8378;        --state-line: rgba(138, 131, 120, .40); }
+html[data-state="unknown"] { --state-color: #8A8378;        --state-line: rgba(138, 131, 120, .40); }
+html[data-state="safety"]  { --state-color: var(--cinnabar); --state-line: rgba(166, 58, 44, .55); }
+
+/* 标签跟随状态色 */
+.tcm-tag {
+  color: var(--state-color) !important;
+  box-shadow: inset 0 0 0 1px var(--state-line) !important;
+  transition: color .6s ease, box-shadow .6s ease;
+}
+.tcm-tag.is-calm, .tcm-tag.is-alert {
+  color: var(--state-color);
+  box-shadow: inset 0 0 0 1px var(--state-line);
+}
+/* 炉心的呼吸光晕也轻微跟随（低透明度，只做暗示） */
+.censer-glow { background: radial-gradient(circle closest-side at 50% 46%,
+  color-mix(in srgb, var(--state-color) 26%, transparent) 0%,
+  color-mix(in srgb, var(--state-color) 8%, transparent) 42%,
+  transparent 72%); }
