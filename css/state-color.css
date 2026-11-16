@@ -1,0 +1,132 @@
+/* ============================================================
+   闻息 · state-color.css  （最后加载，用于覆盖美术版样式）
+   状态色系统：五种中医状态各一种色相。
+   设计原则：
+     · 平和 = 安静，只用描边，不抢眼
+     · 非平和 = 有状况，实心色牌 + 炉光偏色，一眼可见
+   ============================================================ */
+
+html {
+  --state-color: #5E7A62;
+  --state-line: rgba(94, 122, 98, .45);
+  --state-soft: rgba(94, 122, 98, .10);
+  --state-ink: #FBF6EA;
+}
+
+html[data-state="heping"] {
+  --state-color: #5E7A62;
+  --state-line: rgba(94, 122, 98, .45);
+  --state-soft: rgba(94, 122, 98, .08);
+  --state-ink: #FBF6EA;
+}
+html[data-state="xinhuo"] {
+  --state-color: #A63A2C;
+  --state-line: rgba(166, 58, 44, .55);
+  --state-soft: rgba(166, 58, 44, .12);
+  --state-ink: #FBF1EA;
+}
+html[data-state="qixue"] {
+  --state-color: #A9782F;
+  --state-line: rgba(169, 120, 47, .55);
+  --state-soft: rgba(169, 120, 47, .12);
+  --state-ink: #FCF6E8;
+}
+html[data-state="yinxu"] {
+  --state-color: #6B5B8C;
+  --state-line: rgba(107, 91, 140, .55);
+  --state-soft: rgba(107, 91, 140, .12);
+  --state-ink: #F7F3FA;
+}
+html[data-state="yangxu"] {
+  --state-color: #46697C;
+  --state-line: rgba(70, 105, 124, .55);
+  --state-soft: rgba(70, 105, 124, .12);
+  --state-ink: #F2F7F9;
+}
+html[data-state="xingzhi"],
+html[data-state="unknown"] {
+  --state-color: #8A8378;
+  --state-line: rgba(138, 131, 120, .45);
+  --state-soft: rgba(138, 131, 120, .10);
+  --state-ink: #FAF7F0;
+}
+html[data-state="safety"] {
+  --state-color: #A63A2C;
+  --state-line: rgba(166, 58, 44, .65);
+  --state-soft: rgba(166, 58, 44, .16);
+  --state-ink: #FBF1EA;
+}
+
+/* ---------- 1. 状态牌：平和描边，非平和实心 ---------- */
+.tcm-tag {
+  color: var(--state-color) !important;
+  box-shadow: inset 0 0 0 1px var(--state-line) !important;
+  background: transparent;
+  transition: color .45s ease, box-shadow .45s ease, background .45s ease, transform .3s ease;
+}
+
+html:not([data-state="heping"]):not([data-state="xingzhi"]):not([data-state="unknown"]) .tcm-tag {
+  color: var(--state-ink) !important;
+  background: var(--state-color) !important;
+  box-shadow: inset 0 0 0 1px var(--state-color) !important;
+}
+
+/* 状态刚变化时轻脉冲一次 */
+.tcm-tag.is-pulse {
+  animation: statePulse .8s var(--ease-breath) both;
+}
+@keyframes statePulse {
+  0%   { transform: scale(1); }
+  28%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- 2. 炉心光晕随状态偏色（覆盖美术版） ---------- */
+html[data-state="heping"] .censer-glow,
+html[data-state="xingzhi"] .censer-glow,
+html[data-state="unknown"] .censer-glow {
+  background: radial-gradient(circle closest-side at 50% 46%,
+    rgba(232, 198, 143, .42) 0%,
+    rgba(201, 160, 99, .14) 40%,
+    rgba(201, 160, 99, 0) 72%) !important;
+}
+html[data-state="xinhuo"] .censer-glow,
+html[data-state="safety"] .censer-glow {
+  background: radial-gradient(circle closest-side at 50% 46%,
+    rgba(166, 58, 44, .34) 0%,
+    rgba(166, 58, 44, .12) 42%,
+    rgba(166, 58, 44, 0) 72%) !important;
+}
+html[data-state="qixue"] .censer-glow {
+  background: radial-gradient(circle closest-side at 50% 46%,
+    rgba(169, 120, 47, .34) 0%,
+    rgba(169, 120, 47, .12) 42%,
+    rgba(169, 120, 47, 0) 72%) !important;
+}
+html[data-state="yinxu"] .censer-glow {
+  background: radial-gradient(circle closest-side at 50% 46%,
+    rgba(107, 91, 140, .32) 0%,
+    rgba(107, 91, 140, .11) 42%,
+    rgba(107, 91, 140, 0) 72%) !important;
+}
+html[data-state="yangxu"] .censer-glow {
+  background: radial-gradient(circle closest-side at 50% 46%,
+    rgba(70, 105, 124, .32) 0%,
+    rgba(70, 105, 124, .11) 42%,
+    rgba(70, 105, 124, 0) 72%) !important;
+}
+
+/* ---------- 3. 状态线：炉子下方那道横线上挂一个状态色点 ---------- */
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 34px;
+  height: 2px;
+  margin-left: -17px;
+  border-radius: 2px;
+  background: var(--state-color);
+  opacity: .5;
+  transition: background .45s ease;
+}

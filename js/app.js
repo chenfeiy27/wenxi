@@ -686,7 +686,7 @@
     state.status = Algorithm.evaluate({ hr: state.hr, hrv: state.hrv, activity: state.activity }, BASELINE);
 
     // 中间层：西医数据 → 中医状态标签（连续 6 次采样一致才切换，避免标签抖动）
-    if (window.TCM) {
+    if (window.TCM && !(state.previewUntil && Date.now() < state.previewUntil)) {
       var tcmNext = TCM.classify(
         { hr: state.hr, hrv: state.hrv, activity: state.activity },
         BASELINE,
@@ -783,8 +783,14 @@
 
     // 状态配色：整页只有「状态色」这一处随身体状态变化
     if (state._stateKey !== state.tcm.key) {
+      var first = state._stateKey === undefined;
       state._stateKey = state.tcm.key;
       document.documentElement.setAttribute('data-state', state.tcm.key || 'heping');
+      if (!first && el.tcmTag) {
+        el.tcmTag.classList.remove('is-pulse');
+        void el.tcmTag.offsetWidth;
+        el.tcmTag.classList.add('is-pulse');
+      }
     }
     if (!state.safetyOpen && el.tcmWhy) {
       el.tcmWhy.textContent = '中医状态倾向：' + state.tcm.name +
@@ -1586,6 +1592,19 @@
     pet: togglePet,
     enter: enterApp,
     demo: startDemo,
+    previewState: function (key, sec) {
+      if (!window.TCM || !TCM.STATES[key]) return null;
+      var st = TCM.STATES[key];
+      state.tcm = Object.assign({}, st, {
+        key: key,
+        confidenceText: '预览',
+        evidence: ['预览模式 · 非实时数据']
+      });
+      state._stateKey = undefined;
+      state.previewUntil = Date.now() + (sec || 8) * 1000;
+      updateToday();
+      return key;
+    },
     stopDemo: stopDemo,
     tcm: function (hr, hrv, act, hour) { return TCM.classify({ hr: hr, hrv: hrv, activity: act }, BASELINE, { hour: hour, stress: state.stress }); },
     ref: function (on) { if (on === false) closeRef(); else openRef(); }
