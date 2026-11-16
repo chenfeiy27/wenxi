@@ -1,121 +1,94 @@
 /* ============================================================
    闻息 · lotus.css  （最后加载）
-   把「香炉图」换成建模版的香薰仪之后，所有对位参数在这里统一覆盖。
-   只调视觉对位，不动任何交互逻辑。
+   产品：香薰仪建模（正视图）
+   只做视觉对位与氛围，不动任何交互逻辑
    ============================================================ */
 
-/* 产品图：方形容器内等比放置 */
+/* ---------- 产品图 ---------- */
 .censer-art {
   object-fit: contain;
+  transform: none;
 }
-
-/* 同一张透明 PNG，昼夜靠滤镜区分质感 */
+/* 白天版已把影棚灰底映射成宣纸色，不再抠边 */
 html[data-theme="day"] .censer-art-day {
-  filter: drop-shadow(0 16px 22px rgba(120, 92, 52, .20));
+  filter: drop-shadow(0 18px 26px rgba(122, 96, 58, .16));
 }
+/* 夜间版已抠图并压暗；再用径向遮罩把边缘化进夜色，去掉抠图残留的灰边 */
 html[data-theme="night"] .censer-art-night {
-  filter: brightness(.88) saturate(.92) drop-shadow(0 14px 26px rgba(0, 0, 0, .45));
+  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, .42));
+  -webkit-mask-image: radial-gradient(closest-side at 50% 47%, #000 58%, rgba(0,0,0,.55) 76%, transparent 92%);
+  mask-image: radial-gradient(closest-side at 50% 47%, #000 58%, rgba(0,0,0,.55) 76%, transparent 92%);
 }
 
-/* 出雾口（莲花中心）在画面里的位置：烟雾从这里升起 */
-.censer-smoke-origin {
-  left: 45%;
-  top: 34%;
-}
-
-/* 接地阴影：产品更宽更扁，投影随之加宽下移 */
-.censer-ground-shadow {
-  top: 84%;
-  width: 74%;
-  height: 7%;
-  opacity: .55;
-}
-
-/* 旧香炉的点火蒙版（花瓣/金线）是按老模型做的，对新模型对不上——隐藏，
-   改用炉心光晕随点火增强，保持"按下 → 亮起"的同一套交互 */
-.ignition-glow {
-  display: none !important;
-}
-
-body.is-igniting .censer-glow {
-  opacity: .95;
-}
-body.is-igniting .ignition-spark {
-  animation-duration: .9s;
-}
-
-
-/* ---------- 尺寸与层次 ---------- */
-.censer-wrap { width: clamp(320px, 54vmin, 600px); }
-
-/* 产品后面的柔和台面光，让奶白产品从宣纸底上浮起来 */
+/* 托底光：只在日间保留一点点，夜间不用（暗底上会显成灰块） */
 .censer-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 6% 0 8%;
-  border-radius: 50%;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255, 249, 232, .92), rgba(255, 249, 232, 0) 70%);
+  background: radial-gradient(closest-side, rgba(255, 249, 232, .55), rgba(255, 249, 232, 0) 70%);
 }
 html[data-theme="night"] .censer-wrap::before {
-  background: radial-gradient(closest-side, rgba(128, 158, 184, .14), rgba(128, 158, 184, 0) 70%);
+  background: none;
 }
 
-/* ---------- 伪 3D：产品跟着鼠标转（perspective + rotate 已在基础样式里），
-   影子和产品反向位移，形成"物件在动、影子不动"的立体感 ---------- */
-.censer-art {
-  transform: scale(1.02);
-  transform-origin: 50% 52%;
-  transition: transform .18s ease-out;
+/* ---------- 尺寸 ---------- */
+.censer-wrap {
+  width: clamp(330px, 56vmin, 620px);
 }
+
+/* ---------- 出雾口：花心 ---------- */
+.censer-smoke-origin {
+  left: 47%;
+  top: 36%;
+}
+
+/* ---------- 接地阴影 + 伪 3D 反向位移 ---------- */
 .censer-ground-shadow {
+  top: 86%;
+  width: 72%;
+  height: 6.5%;
+  opacity: .5;
   transform: translateX(-50%)
-             translate(calc(var(--tx, 0) * -2.4px), calc(var(--ty, 0) * 3.2px))
+             translate(calc(var(--tx, 0) * -2.2px), calc(var(--ty, 0) * 3px))
              scaleX(calc(1 + var(--tx, 0) * .012));
-  transition: transform .18s ease-out;
+  transition: transform .2s ease-out;
 }
 
-/* 光影随倾斜方向变化，进一步强化体积感 */
-.censer-wrap::before {
-  transform: translate(calc(var(--tx, 0) * 3px), calc(var(--ty, 0) * -2px));
-  transition: transform .18s ease-out;
-}
-
-/* ---------- 夜间：白色产品要压暗，避免突兀 ---------- */
-html[data-theme="night"] .censer-art-night {
-  filter: brightness(.60) saturate(.86) contrast(1.04)
-          drop-shadow(0 12px 26px rgba(0, 0, 0, .5));
-}
-
-/* ---------- 花瓣张开：点火时叠一层莲花区域，轻微放大 ---------- */
-.censer-bloom {
+/* ---------- 花心透光：点燃时从花心透出粉光（不做几何放大） ---------- */
+.censer-budglow {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  z-index: 4;
+  left: 47%;
+  top: 36%;
+  width: 34%;
+  height: 34%;
+  transform: translate(-50%, -50%) scale(.72);
+  border-radius: 50%;
+  z-index: 3;
   pointer-events: none;
   opacity: 0;
-  clip-path: circle(23% at 44% 37%);
-  transform-origin: 44% 37%;
-  transform: scale(1);
-  transition: opacity 1.2s ease, transform 2.2s cubic-bezier(.33, .02, .2, 1);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 196, 214, .85) 0%,
+    rgba(255, 176, 200, .40) 34%,
+    rgba(255, 170, 196, .12) 58%,
+    rgba(255, 170, 196, 0) 78%);
+  filter: blur(10px);
+  transition: opacity 1.5s cubic-bezier(.4, 0, .2, 1), transform 2.4s cubic-bezier(.33, .02, .2, 1);
 }
-html[data-theme="night"] .censer-bloom {
-  filter: brightness(.60) saturate(.86);
+body.is-igniting .censer-budglow {
+  opacity: .95;
+  transform: translate(-50%, -50%) scale(1.06);
 }
-body.is-igniting .censer-bloom,
-body.is-lit .censer-bloom {
-  opacity: .96;
-  transform: scale(1.13);
+body.is-lit .censer-budglow {
+  opacity: .62;
+  transform: translate(-50%, -50%) scale(1);
+  animation: budBreath 5.6s ease-in-out infinite;
+}
+@keyframes budBreath {
+  0%, 100% { opacity: .50; }
+  50%      { opacity: .74; }
 }
 
-/* 点火瞬间莲花内部透出粉光 */
+/* 点火瞬间整炉泛一层暖粉 */
 body.is-igniting .censer-glow {
-  background: radial-gradient(closest-side at 44% 37%,
-    rgba(255, 190, 210, .55) 0%,
-    rgba(255, 170, 196, .18) 38%,
-    rgba(255, 170, 196, 0) 70%);
+  background: radial-gradient(closest-side at 47% 45%,
+    rgba(255, 205, 218, .34) 0%,
+    rgba(255, 190, 210, .12) 42%,
+    rgba(255, 190, 210, 0) 72%);
 }

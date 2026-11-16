@@ -92,15 +92,15 @@ var Smoke = (function () {
 
     p.alive = true;
     p.age = 0;
-    p.life = 4.2 + rnd() * 3.4;
-    p.x = origin.x + (rnd() - 0.5) * 13;
+    p.life = 5.5 + rnd() * 4.2;
+    p.x = origin.x + (rnd() - 0.5) * 7;
     p.y = origin.y + (rnd() - 0.5) * 6;
-    p.vx = (rnd() - 0.5) * 13;
-    p.vy = -(13 + rnd() * 11) * (boost ? 1.7 : 1);
-    p.size = 12 + rnd() * 14;
-    p.grow = 16 + rnd() * 26;
+    p.vx = (rnd() - 0.5) * 5;
+    p.vy = -(7 + rnd() * 6) * (boost ? 1.7 : 1);
+    p.size = 16 + rnd() * 16;
+    p.grow = 26 + rnd() * 30;
     p.seed = rnd() * 480;
-    p.alpha = 0.55 + rnd() * 0.45;
+    p.alpha = 0.20 + rnd() * 0.24;
     return true;
   }
 
@@ -120,7 +120,7 @@ var Smoke = (function () {
     if (Math.abs(target - intensity) < 0.001) intensity = target;
 
     // 生成
-    var rate = intensity * 26 * density;
+    var rate = intensity * 9 * density;
     spawnAcc += rate * dt;
     var guard = 0;
     while (spawnAcc >= 1 && guard++ < 8) {
@@ -170,7 +170,7 @@ var Smoke = (function () {
     ctx.clearRect(0, 0, W, H);
     ctx.globalCompositeOperation = style.blend;
 
-    var glow = (0.052 + intensity * 0.020) * style.gain;
+    var glow = (0.105 + intensity * 0.060) * style.gain;
 
     for (var i = 0; i < MAX; i++) {
       var p = particles[i];
