@@ -56,33 +56,33 @@ html[data-theme="night"] .censer-wrap::before {
   position: absolute;
   left: 47%;
   top: 36%;
-  width: 34%;
-  height: 34%;
+  width: 24%;
+  height: 24%;
   transform: translate(-50%, -50%) scale(.72);
   border-radius: 50%;
   z-index: 3;
   pointer-events: none;
   opacity: 0;
   background: radial-gradient(circle closest-side,
-    rgba(255, 196, 214, .85) 0%,
-    rgba(255, 176, 200, .40) 34%,
-    rgba(255, 170, 196, .12) 58%,
-    rgba(255, 170, 196, 0) 78%);
-  filter: blur(10px);
+    rgba(255, 200, 216, .62) 0%,
+    rgba(255, 182, 203, .26) 38%,
+    rgba(255, 176, 200, .08) 60%,
+    rgba(255, 176, 200, 0) 78%);
+  filter: blur(7px);
   transition: opacity 1.5s cubic-bezier(.4, 0, .2, 1), transform 2.4s cubic-bezier(.33, .02, .2, 1);
 }
 body.is-igniting .censer-budglow {
-  opacity: .95;
-  transform: translate(-50%, -50%) scale(1.06);
+  opacity: .80;
+  transform: translate(-50%, -50%) scale(1.02);
 }
 body.is-lit .censer-budglow {
-  opacity: .62;
+  opacity: .38;
   transform: translate(-50%, -50%) scale(1);
   animation: budBreath 5.6s ease-in-out infinite;
 }
 @keyframes budBreath {
-  0%, 100% { opacity: .50; }
-  50%      { opacity: .74; }
+  0%, 100% { opacity: .30; }
+  50%      { opacity: .46; }
 }
 
 /* 点火瞬间整炉泛一层暖粉 */
