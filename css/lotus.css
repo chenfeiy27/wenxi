@@ -1,0 +1,69 @@
+/* ============================================================
+   闻息 · lotus.css  （最后加载）
+   把「香炉图」换成建模版的香薰仪之后，所有对位参数在这里统一覆盖。
+   只调视觉对位，不动任何交互逻辑。
+   ============================================================ */
+
+/* 产品图：方形容器内等比放置 */
+.censer-art {
+  object-fit: contain;
+}
+
+/* 同一张透明 PNG，昼夜靠滤镜区分质感 */
+html[data-theme="day"] .censer-art-day {
+  filter: drop-shadow(0 16px 22px rgba(120, 92, 52, .20));
+}
+html[data-theme="night"] .censer-art-night {
+  filter: brightness(.88) saturate(.92) drop-shadow(0 14px 26px rgba(0, 0, 0, .45));
+}
+
+/* 出雾口（莲花中心）在画面里的位置：烟雾从这里升起 */
+.censer-smoke-origin {
+  left: 50%;
+  top: 40%;
+}
+
+/* 接地阴影：产品更宽更扁，投影随之加宽下移 */
+.censer-ground-shadow {
+  top: 84%;
+  width: 74%;
+  height: 7%;
+  opacity: .55;
+}
+
+/* 旧香炉的点火蒙版（花瓣/金线）是按老模型做的，对新模型对不上——隐藏，
+   改用炉心光晕随点火增强，保持"按下 → 亮起"的同一套交互 */
+.ignition-glow {
+  display: none !important;
+}
+
+body.is-igniting .censer-glow {
+  opacity: .95;
+}
+body.is-igniting .ignition-spark {
+  animation-duration: .9s;
+}
+
+
+/* ---------- 尺寸与层次：建模产品比原来的香炉小，需要放大 + 托底 ---------- */
+.censer-wrap { width: clamp(320px, 54vmin, 600px); }
+
+/* 产品后面的柔和台面光，让奶白产品从宣纸底上浮起来 */
+.censer-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 4% -2% 6%;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 249, 232, .95), rgba(255, 249, 232, 0) 72%);
+}
+html[data-theme="night"] .censer-wrap::before {
+  background: radial-gradient(closest-side, rgba(128, 158, 184, .16), rgba(128, 158, 184, 0) 72%);
+}
+
+.censer-art { transform: scale(1.05); transform-origin: 50% 52%; }
+
+html[data-theme="day"] .censer-art-day {
+  filter: contrast(1.04) saturate(1.03) drop-shadow(0 22px 26px rgba(120, 92, 52, .22));
+}
