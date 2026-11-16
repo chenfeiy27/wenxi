@@ -174,12 +174,7 @@
     try { localStorage.setItem(LS_THEME, t); } catch (e) { /* noop */ }
 
     // 烟的颜色随主题变：夜里白光烟（加法发光），白天墨烟（正常叠加）
-    if (window.Smoke && Smoke.setStyle) {
-      try {
-        if (t === 'day') Smoke.setStyle({ color: [255, 255, 255], blend: 'lighter', gain: 3.2 });
-        else Smoke.setStyle({ color: [193, 213, 229], blend: 'source-over', gain: .8 });
-      } catch (e) { /* noop */ }
-    }
+    try { smokeStyleForState(); } catch (e) { /* noop */ }
     pushScent();
     renderLegend();
     renderCalendar();
@@ -515,12 +510,28 @@
     if (el.spiralGroup) el.spiralGroup.style.setProperty('--p', '0');
   }
 
+  // 点燃后改冒粉烟（呼应粉色莲花出雾口）；夜间压暗一档，避免刺眼
+  function smokeStyleForState() {
+    if (!window.Smoke || !Smoke.setStyle) return;
+    var lit = state.lit || state.igniting;
+    var night = state.theme === 'night';
+    if (lit) {
+      /* 粉烟：宣纸底上用正常叠加才看得见，夜间用深一档的粉 */
+      if (night) Smoke.setStyle({ color: [232, 150, 180], blend: 'source-over', gain: 4.4 });
+      else Smoke.setStyle({ color: [250, 168, 194], blend: 'lighter', gain: 3.4 });
+    } else {
+      if (night) Smoke.setStyle({ color: [193, 213, 229], blend: 'source-over', gain: .8 });
+      else Smoke.setStyle({ color: [255, 255, 255], blend: 'lighter', gain: 3.2 });
+    }
+  }
+
   function ignite() {
     if (state.lit || state.igniting) return;
     state.igniting = true;
     state.ignitionStart = performance.now();
     root.style.setProperty('--ignition-tail', '0');
     body.classList.add('is-igniting');
+    smokeStyleForState();
     if (el.censerHint) el.censerHint.textContent = '烟起 · 香暖';
     if (window.AudioFX) { try { AudioFX.ignite(); } catch (e) {} }
     syncRunUI();
@@ -535,6 +546,7 @@
     if (el.censer) el.censer.setAttribute('aria-pressed', 'false');
     if (el.censerHint) { el.censerHint.classList.remove('is-hidden'); el.censerHint.textContent = '长按 · 点香'; }
     if (window.Smoke && Smoke.clear) Smoke.clear();
+    smokeStyleForState();
     if (window.AudioFX) { try { AudioFX.breathe(false); } catch (e) {} }
     updateToday();
     updateDevicePanel();
