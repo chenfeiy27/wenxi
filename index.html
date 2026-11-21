@@ -52,7 +52,8 @@
     <button id="btnPet" class="chip" type="button" aria-pressed="false" title="桌宠（快捷键 P）">桌宠</button>
     <button id="btnSound" class="chip" type="button" aria-pressed="false" title="声音（快捷键 M）"><i class="chip-dot" aria-hidden="true"></i>声</button>
     <button id="btnRef" class="chip" type="button" aria-expanded="false" aria-controls="refSheet" title="香事（快捷键 K）">香事</button>
-    <button id="btnHelp" class="chip" type="button" title="使用帮助（快捷键 H）">帮助</button>
+    <button id="btnViewer" class="chip chip-360" type="button" aria-expanded="false" title="样机 360°（快捷键 V）">360°</button>
+        <button id="btnHelp" class="chip" type="button" title="使用帮助（快捷键 H）">帮助</button>
   </div>
 </header>
 
@@ -94,18 +95,10 @@
             <circle class="press-fill" id="pressFill" cx="200" cy="205" r="176"/>
           </svg>
           <div class="censer-ground-shadow" aria-hidden="true"></div>
-          <img class="censer-art censer-art-day" src="assets/censer/lotus-day.png"
+          <img class="censer-art censer-art-day" src="assets/censer/product.webp"
                width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
-          <img class="censer-art censer-art-night" src="assets/censer/lotus-night.png"
+          <img class="censer-art censer-art-night" src="assets/censer/product.webp"
                width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
-<span class="censer-budglow" aria-hidden="true"></span>
-<span class="ignition-glow ignition-1" aria-hidden="true"></span>
-<span class="ignition-glow ignition-2" aria-hidden="true"></span>
-<span class="ignition-glow ignition-3" aria-hidden="true"></span>
-<span class="ignition-glow ignition-4" aria-hidden="true"></span>
-<span class="ignition-glow ignition-5" aria-hidden="true"></span>
-<span class="ignition-spark spark-one" aria-hidden="true"></span><span class="ignition-spark spark-two" aria-hidden="true"></span>
-<span class="ignition-spark spark-three" aria-hidden="true"></span><span class="ignition-spark spark-four" aria-hidden="true"></span><span class="ignition-spark spark-five" aria-hidden="true"></span>
           <span class="censer-smoke-origin" id="censerSmokeOrigin" aria-hidden="true"></span>
 
           <div class="censer-hint" id="censerHint">长按 · 点香</div>
@@ -442,5 +435,6 @@
 <script src="js/interaction-art.js"></script>
 <script src="js/ref-game.js"></script>
 <script src="js/app.js"></script>
+<script src="js/viewer.js"></script>
 </body>
 </html>

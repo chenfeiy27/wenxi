@@ -517,8 +517,8 @@
     var night = state.theme === 'night';
     if (lit) {
       /* 粉烟：宣纸底上用正常叠加才看得见，夜间用深一档的粉 */
-      if (night) Smoke.setStyle({ color: [222, 178, 190], blend: 'source-over', gain: 1.15 });
-      else Smoke.setStyle({ color: [247, 214, 223], blend: 'source-over', gain: 1.6 });
+      if (night) Smoke.setStyle({ color: [228, 165, 186], blend: 'source-over', gain: 2.6 });
+      else Smoke.setStyle({ color: [248, 186, 204], blend: 'source-over', gain: 3.0 });
     } else {
       if (night) Smoke.setStyle({ color: [193, 213, 229], blend: 'source-over', gain: .8 });
       else Smoke.setStyle({ color: [255, 255, 255], blend: 'lighter', gain: 3.2 });

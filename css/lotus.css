@@ -4,28 +4,9 @@
    只做视觉对位与氛围，不动任何交互逻辑
    ============================================================ */
 
-/* ---------- 产品图 ---------- */
+/* ---------- 产品图：Blender 透明渲染，昼夜共用 ---------- */
 .censer-art {
   object-fit: contain;
-  transform: none;
-}
-/* 白天版已把影棚灰底映射成宣纸色，不再抠边 */
-html[data-theme="day"] .censer-art-day {
-  filter: drop-shadow(0 18px 26px rgba(122, 96, 58, .16));
-}
-/* 夜间版已抠图并压暗；再用径向遮罩把边缘化进夜色，去掉抠图残留的灰边 */
-html[data-theme="night"] .censer-art-night {
-  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, .42));
-  -webkit-mask-image: radial-gradient(closest-side at 50% 47%, #000 58%, rgba(0,0,0,.55) 76%, transparent 92%);
-  mask-image: radial-gradient(closest-side at 50% 47%, #000 58%, rgba(0,0,0,.55) 76%, transparent 92%);
-}
-
-/* 托底光：只在日间保留一点点，夜间不用（暗底上会显成灰块） */
-.censer-wrap::before {
-  background: radial-gradient(closest-side, rgba(255, 249, 232, .55), rgba(255, 249, 232, 0) 70%);
-}
-html[data-theme="night"] .censer-wrap::before {
-  background: none;
 }
 
 /* ---------- 尺寸 ---------- */
@@ -51,26 +32,6 @@ html[data-theme="night"] .censer-wrap::before {
   transition: transform .2s ease-out;
 }
 
-/* ---------- 花心透光：点燃时从花心透出粉光（不做几何放大） ---------- */
-.censer-budglow {
-  position: absolute;
-  left: 47%;
-  top: 36%;
-  width: 24%;
-  height: 24%;
-  transform: translate(-50%, -50%) scale(.72);
-  border-radius: 50%;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(circle closest-side,
-    rgba(255, 200, 216, .62) 0%,
-    rgba(255, 182, 203, .26) 38%,
-    rgba(255, 176, 200, .08) 60%,
-    rgba(255, 176, 200, 0) 78%);
-  filter: blur(7px);
-  transition: opacity 1.5s cubic-bezier(.4, 0, .2, 1), transform 2.4s cubic-bezier(.33, .02, .2, 1);
-}
 body.is-igniting .censer-budglow {
   opacity: .80;
   transform: translate(-50%, -50%) scale(1.02);
@@ -85,10 +46,141 @@ body.is-lit .censer-budglow {
   50%      { opacity: .46; }
 }
 
-/* 点火瞬间整炉泛一层暖粉 */
-body.is-igniting .censer-glow {
-  background: radial-gradient(closest-side at 47% 45%,
-    rgba(255, 205, 218, .34) 0%,
-    rgba(255, 190, 210, .12) 42%,
-    rgba(255, 190, 210, 0) 72%);
+
+
+
+
+/* CSS 接触阴影：产品底下压一层椭圆暗影，做出"放在桌面上"的重量感 */
+.censer-ground-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  z-index: 1;
+  width: 62%;
+  height: 7%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side,
+    rgba(96, 74, 50, .30) 0%,
+    rgba(96, 74, 50, .16) 45%,
+    rgba(96, 74, 50, 0) 100%);
+  filter: blur(6px);
+}
+html[data-theme="night"] .censer-ground-shadow {
+  background: radial-gradient(closest-side,
+    rgba(0, 0, 0, .55) 0%,
+    rgba(0, 0, 0, .28) 45%,
+    rgba(0, 0, 0, 0) 100%);
+}
+
+
+/* ============================================================
+   样机 360° 查看器
+   ============================================================ */
+.chip-360 {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .06em;
+}
+
+body.viewer-open {
+  overflow: hidden;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 26px clamp(20px, 4vw, 56px);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity .45s ease, visibility 0s linear .45s;
+}
+.viewer.is-on {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  background: rgba(20, 26, 32, .62);
+  -webkit-backdrop-filter: blur(14px) saturate(.95);
+  backdrop-filter: blur(14px) saturate(.95);
+  transition: opacity .45s ease;
+}
+
+.viewer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.viewer-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: .22em;
+  color: #F6EEDD;
+  opacity: .95;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, .35);
+}
+.viewer-close {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: .22em;
+  color: #F6EEDD;
+  opacity: .85;
+  padding: 6px 4px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, .35);
+}
+.viewer-close:hover { opacity: 1; }
+
+.viewer-stage {
+  position: relative;
+  margin: 10px auto;
+  width: min(74vmin, 780px);
+  aspect-ratio: 1 / 1;
+  cursor: grab;
+}
+.viewer-stage:active { cursor: grabbing; }
+.viewer-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.viewer-hint,
+.viewer-load {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: .18em;
+  color: #F2E9D8;
+  opacity: .62;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, .4);
+}
+.viewer-load { margin-top: 6px; opacity: .4; font-size: 10.5px; }
+
+html[data-theme="day"] .viewer {
+  background: rgba(52, 42, 30, .62);
+}
+html[data-theme="night"] .viewer {
+  background: rgba(12, 18, 24, .62);
+}
+
+/* 产品在查看器里的落影 */
+.viewer-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 15%;
+  width: 46%;
+  height: 5.5%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side,
+    rgba(0, 0, 0, .42) 0%,
+    rgba(0, 0, 0, .20) 45%,
+    rgba(0, 0, 0, 0) 100%);
+  filter: blur(9px);
 }
