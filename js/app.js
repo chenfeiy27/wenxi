@@ -527,8 +527,8 @@
     var night = state.theme === 'night';
     if (lit) {
       /* 粉烟：宣纸底上用正常叠加才看得见，夜间用深一档的粉 */
-      if (night) Smoke.setStyle({ color: [228, 165, 186], blend: 'source-over', gain: 2.6 });
-      else Smoke.setStyle({ color: [248, 186, 204], blend: 'source-over', gain: 3.0 });
+      if (night) Smoke.setStyle({ color: [249, 196, 210], blend: 'source-over', gain: 2.4 });
+      else Smoke.setStyle({ color: [234, 144, 170], blend: 'source-over', gain: 2.8 });
     } else {
       if (night) Smoke.setStyle({ color: [193, 213, 229], blend: 'source-over', gain: .8 });
       else Smoke.setStyle({ color: [255, 255, 255], blend: 'lighter', gain: 3.2 });
@@ -543,7 +543,12 @@
     body.classList.add('is-igniting');
     smokeStyleForState();
     if (el.censerHint) el.censerHint.textContent = '烟起 · 香暖';
-    if (window.Music && state.sound) { try { Music.playSfx('ignite'); } catch (e) {} }
+    if (window.Music && state.sound) {
+      try {
+        Music.playSfx('ignite');
+        Music.startLoop('burn', 0.42, 1600);
+      } catch (e) {}
+    }
       if (window.AudioFX) { try { AudioFX.ignite(); } catch (e) {} }
     syncRunUI();
     if (reduceMotion) completeIgnition(state.paused);
@@ -559,6 +564,7 @@
     if (window.Smoke && Smoke.clear) Smoke.clear();
     smokeStyleForState();
     if (window.AudioFX) { try { AudioFX.breathe(false); } catch (e) {} }
+    if (window.Music && Music.stopLoop) { try { Music.stopLoop('burn', 900); } catch (e) {} }
     updateToday();
     updateDevicePanel();
   }
@@ -1179,6 +1185,12 @@
   }
 
   function applySfx() {
+    if (window.Music && Music.stopLoop) {
+      try {
+        if (!state.sound) Music.stopLoop('burn', 600);
+        else if (state.lit) Music.startLoop('burn', 0.42, 1200);
+      } catch (e) {}
+    }
     if (window.AudioFX) {
       try {
         AudioFX.setEnabled(state.sound);

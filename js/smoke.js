@@ -1,68 +1,84 @@
 /* ============================================================
-   闻息 · smoke.js
-   Canvas 粒子烟雾。粒子池固定上限 120，单 rAF 由 app.js 驱动。
-   · 升腾 + simplex 湍流扰动
-   · 指针靠近时被推开（"烟受指针扰动"）
-   · 点香瞬间 burst() 让烟骤然转浓
-   · 高压时 setTurbulence() 让烟变乱
+   闻息 · smoke.js（贴图版）
+   用程序生成的"烟丝"贴图做旋转广告牌，叠加成写实香烟：
+     · 3 张 256² 细丝贴图（assets/smoke/wisp*.png），运行时按主题染色
+     · 每个烟团缓慢旋转、变大、淡出；上升速度约 100–140 px/s
+     · 两层绘制（大而淡 + 小而实），得到体积感而不是硬线条
+   公共接口与旧版保持一致（app.js 无需改动）
    ============================================================ */
 
 var Smoke = (function () {
   'use strict';
 
-  var MAX = 120;
+  var MAX = 110;
+  var SRC = ['assets/smoke/wisp1.png', 'assets/smoke/wisp2.png', 'assets/smoke/wisp3.png'];
 
   var canvas = null;
   var ctx = null;
   var W = 0, H = 0, dpr = 1;
 
+  var imgs = [];        /* 原始贴图 */
+  var tinted = [];      /* 染色后的离屏 canvas */
+  var tintKey = '';
+
   var particles = [];
-  var sprite = null;
   var noise = new Noise.Simplex(8817);
   var rnd = Noise.mulberry32(2026);
 
   var origin = { x: 0, y: 0 };
-  var intensity = 0;      // 当前烟浓度 0~1.3（缓动到 target）
+  var intensity = 0;
   var target = 0;
-  var turbulence = 0.9;   // 湍流强度，高压时升高
-  var density = 1;        // 全局密度（reduced-motion 时降低）
+  var turbulence = 0.9;
+  var density = 1;
   var spawnAcc = 0;
 
   var pointer = { x: -9999, y: -9999 };
+  var style = { r: 234, g: 144, b: 170, blend: 'source-over', gain: 1 };
 
-  var style = { r: 228, g: 222, b: 206, blend: 'lighter', gain: 1 };
-
-  function makeSprite() {
-    var size = 128;
-    var c = document.createElement('canvas');
-    c.width = c.height = size;
-    var g = c.getContext('2d');
-    var r = size / 2;
-    var R = style.r, G = style.g, B = style.b;
-    var grad = g.createRadialGradient(r, r, 0, r, r, r);
-    grad.addColorStop(0.00, 'rgba(' + R + ',' + G + ',' + B + ',0.60)');
-    grad.addColorStop(0.30, 'rgba(' + R + ',' + G + ',' + B + ',0.26)');
-    grad.addColorStop(0.62, 'rgba(' + R + ',' + G + ',' + B + ',0.08)');
-    grad.addColorStop(1.00, 'rgba(' + R + ',' + G + ',' + B + ',0.00)');
-    g.fillStyle = grad;
-    g.fillRect(0, 0, size, size);
-    return c;
+  function loadImages() {
+    if (imgs.length) return;
+    for (var i = 0; i < SRC.length; i++) {
+      var im = new Image();
+      im.src = SRC[i];
+      imgs.push(im);
+    }
   }
 
-  /* 主题换色：夜间白光烟（lighter），白天墨烟（source-over） */
-  function setStyle(opt) {
-    opt = opt || {};
-    if (opt.color) { style.r = opt.color[0]; style.g = opt.color[1]; style.b = opt.color[2]; }
-    if (opt.blend) style.blend = opt.blend;
-    if (opt.gain != null) style.gain = opt.gain;
-    if (canvas) sprite = makeSprite();
+  /* 把白色贴图染成主题色（source-in），结果缓存 */
+  function buildTinted() {
+    var key = style.r + ',' + style.g + ',' + style.b;
+    if (key === tintKey && tinted.length === imgs.length) return;
+    tintKey = key;
+    tinted = [];
+    for (var i = 0; i < imgs.length; i++) {
+      var im = imgs[i];
+      if (!im.complete || !im.naturalWidth) { tinted.push(null); continue; }
+      var c = document.createElement('canvas');
+      c.width = im.naturalWidth;
+      c.height = im.naturalHeight;
+      var g = c.getContext('2d');
+      g.drawImage(im, 0, 0);
+      g.globalCompositeOperation = 'source-in';
+      g.fillStyle = 'rgb(' + style.r + ',' + style.g + ',' + style.b + ')';
+      g.fillRect(0, 0, c.width, c.height);
+      tinted.push(c);
+    }
   }
 
   function init(canvasEl) {
     canvas = canvasEl;
     ctx = canvas.getContext('2d');
-    sprite = makeSprite();
+    loadImages();
+    particles = [];
     for (var i = 0; i < MAX; i++) particles.push({ alive: false });
+  }
+
+  function setStyle(opt) {
+    opt = opt || {};
+    if (opt.color) { style.r = opt.color[0]; style.g = opt.color[1]; style.b = opt.color[2]; }
+    if (opt.blend) style.blend = opt.blend;
+    if (opt.gain != null) style.gain = opt.gain;
+    tintKey = '';
   }
 
   function resize(w, h, ratio) {
@@ -92,45 +108,44 @@ var Smoke = (function () {
 
     p.alive = true;
     p.age = 0;
-    p.life = 5.5 + rnd() * 4.2;
-    p.x = origin.x + (rnd() - 0.5) * 7;
-    p.y = origin.y + (rnd() - 0.5) * 6;
-    p.vx = (rnd() - 0.5) * 5;
-    p.vy = -(7 + rnd() * 6) * (boost ? 1.7 : 1);
-    p.size = 16 + rnd() * 16;
-    p.grow = 26 + rnd() * 30;
-    p.seed = rnd() * 480;
-    p.alpha = 0.20 + rnd() * 0.24;
+    p.life = 3.6 + rnd() * 1.9;
+    p.x = origin.x + (rnd() - 0.5) * 12;
+    p.y = origin.y + (rnd() - 0.5) * 10;
+    p.vx = (rnd() - 0.5) * 34;
+    p.vy = -(86 + rnd() * 40) * (boost ? 1.2 : 1);
+    p.size0 = 22 + rnd() * 16;
+    p.grow = 30 + rnd() * 26;
+    p.rot = rnd() * Math.PI * 2;
+    p.spin = (rnd() - 0.5) * 0.5;
+    p.seed = rnd() * 720;
+    p.alpha = 0.15 + rnd() * 0.12;
+    p.sprite = (rnd() * 3) | 0;
     return true;
   }
 
   function burst(n) {
-    var count = Math.min(48, n | 0);
-    for (var i = 0; i < count; i++) {
-      if (!spawnOne(true)) break;
-    }
+    var count = Math.min(24, n | 0);
+    for (var i = 0; i < count; i++) if (!spawnOne(true)) break;
   }
 
   function update(dt, time) {
     if (!ctx) return;
     dt = Math.min(dt, 0.05);
 
-    // 浓度缓动（点香瞬间 target=1，约 0.3s 到位）
-    intensity += (target - intensity) * Math.min(1, dt * 2.4);
+    if (imgs.length && imgs[0].complete) buildTinted();
+
+    intensity += (target - intensity) * Math.min(1, dt * 3.4);
     if (Math.abs(target - intensity) < 0.001) intensity = target;
 
-    // 生成
-    var rate = intensity * 9 * density;
+    var rate = intensity * 13 * density;
     spawnAcc += rate * dt;
     var guard = 0;
-    while (spawnAcc >= 1 && guard++ < 8) {
+    while (spawnAcc >= 1 && guard++ < 6) {
       spawnAcc -= 1;
       if (!spawnOne(false)) { spawnAcc = 0; break; }
     }
 
     var turb = turbulence;
-    var baseUp = -(16 + 12 * intensity);
-
     for (var i = 0; i < MAX; i++) {
       var p = particles[i];
       if (!p.alive) continue;
@@ -138,52 +153,67 @@ var Smoke = (function () {
       p.age += dt;
       if (p.age >= p.life) { p.alive = false; continue; }
 
-      // 两层 simplex 湍流
-      var n1 = noise.noise2D(p.x * 0.0042 + p.seed, p.y * 0.0042 - time * 0.22);
-      var n2 = noise.noise2D(p.x * 0.012 + p.seed * 1.7, p.y * 0.012 + time * 0.13);
-      p.vx += (n1 * 36 + n2 * 14) * dt * turb;
-      p.vy += (baseUp - p.vy) * Math.min(1, dt * 0.8);
+      /* 两层噪声：慢的横向漂移 + 快的抖动，形成 S 形上升 */
+      var n1 = noise.noise2D(p.seed + p.y * 0.0032, time * 0.30);
+      var n2 = noise.noise2D(p.seed * 1.9 + p.x * 0.007, time * 0.55 + 30);
+      p.vx += (n1 * 120 + n2 * 64 + Math.sin(time * 1.35 + p.seed * 0.01) * 92) * dt * turb;
 
-      // 指针扰动
-      var dx = p.x - pointer.x;
-      var dy = p.y - pointer.y;
+      /* 越往上越飘（烟在高处扩散） */
+      var high = Math.max(0, (origin.y - p.y) / 400);
+      p.vx += n1 * 34 * dt * high;
+
+      p.vx *= (1 - Math.min(0.6, dt * 1.1));
+
+      /* 指针扰动 */
+      var dx = p.x - pointer.x, dy = p.y - pointer.y;
       var d2 = dx * dx + dy * dy;
-      var R = 118;
-      if (d2 < R * R && d2 > 0.4) {
+      var R = 130;
+      if (d2 < R * R && d2 > 4) {
         var d = Math.sqrt(d2);
-        var f = (1 - d / R) * 340 * dt;
-        p.vx += (dx / d) * f;
-        p.vy += (dy / d) * f * 0.65;
+        var f = (1 - d / R) * 260 * dt;
+        p.x += (dx / d) * f;
+        p.y += (dy / d) * f * 0.55;
       }
 
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.size += p.grow * dt * 0.34;
+      p.rot += p.spin * dt;
+      p.size0 += p.grow * dt;
 
-      // 出屏回收
-      if (p.y < -140 || p.x < -160 || p.x > W + 160) p.alive = false;
+      if (p.y < -260 || p.x < -300 || p.x > W + 300) p.alive = false;
     }
+  }
+
+  function drawParticle(p, extraScale, alphaMul) {
+    var k = p.age / p.life;
+    var fadeIn = k < 0.14 ? k / 0.14 : 1;
+    var fadeOut = 1 - Math.pow(k, 1.8);
+    var a = p.alpha * fadeIn * fadeOut * alphaMul * Math.min(2.0, style.gain) * 0.5;
+    if (a < 0.004) return;
+    var img = tinted[p.sprite];
+    if (!img) return;
+    var s = p.size0 * extraScale;
+    ctx.globalAlpha = Math.min(1, a);
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.drawImage(img, -s / 2, -s / 2, s, s);
+    ctx.restore();
   }
 
   function render() {
     if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
-    ctx.globalCompositeOperation = style.blend;
-
-    var glow = (0.105 + intensity * 0.060) * style.gain;
+    if (!tinted.length || !tinted[0]) return;
+    ctx.globalCompositeOperation = style.blend === 'lighter' ? 'lighter' : 'source-over';
 
     for (var i = 0; i < MAX; i++) {
       var p = particles[i];
       if (!p.alive) continue;
-
-      var k = p.age / p.life;
-      var fadeIn = k < 0.16 ? k / 0.16 : 1;
-      var alpha = fadeIn * (1 - k) * (1 - k * 0.35) * p.alpha * glow;
-      if (alpha < 0.0025) continue;
-
-      ctx.globalAlpha = alpha;
-      var s = p.size;
-      ctx.drawImage(sprite, p.x - s, p.y - s, s * 2, s * 2);
+      /* 大而淡的一层，负责体积 */
+      drawParticle(p, 1.45, 0.5);
+      /* 小而实的一层，负责细丝 */
+      drawParticle(p, 0.92, 1.0);
     }
 
     ctx.globalAlpha = 1;
@@ -191,7 +221,11 @@ var Smoke = (function () {
   }
 
   return {
-    clear: function () { particles.forEach(function (p) { p.alive = false; }); intensity = 0; if (ctx) ctx.clearRect(0, 0, W, H); },
+    clear: function () {
+      for (var i = 0; i < MAX; i++) particles[i].alive = false;
+      intensity = 0;
+      if (ctx) ctx.clearRect(0, 0, W, H);
+    },
     MAX: MAX,
     init: init,
     setStyle: setStyle,
@@ -204,6 +238,6 @@ var Smoke = (function () {
     clearPointer: clearPointer,
     burst: burst,
     update: update,
-    render: render,
+    render: render
   };
 })();

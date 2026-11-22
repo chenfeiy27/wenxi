@@ -10,6 +10,7 @@
 
   var MUSIC_SRC = 'assets/audio/theme.mp3';
   var SFX_FILE = { ignite: 'assets/audio/ignite.wav' };
+  var SFX_LOOP = { burn: 'assets/audio/burn.wav' };
 
   var audio = null;
   var sfxPool = [];
@@ -132,6 +133,65 @@
     return true;
   }
 
+  /* ---------- 循环音效（燃烧底噪） ---------- */
+  var loops = {};
+
+  function startLoop(name, targetVol, fadeMs) {
+    var src = SFX_LOOP[name];
+    if (!src) return false;
+    var rec = loops[name];
+    if (!rec) {
+      var a = new Audio();
+      a.src = src;
+      a.loop = true;
+      a.preload = 'auto';
+      a.volume = 0;
+      rec = loops[name] = { el: a, timer: null };
+    }
+    if (rec.el.paused) playSafe(rec.el);
+    var to = Math.max(0, Math.min(1, targetVol == null ? 0.5 : targetVol));
+    var ms = fadeMs == null ? 1800 : fadeMs;
+    if (rec.timer) { clearInterval(rec.timer); rec.timer = null; }
+    var from = rec.el.volume, steps = Math.max(1, Math.round(ms / 50)), i = 0;
+    rec.timer = setInterval(function () {
+      i++;
+      rec.el.volume = Math.max(0, Math.min(1, from + (to - from) * (i / steps)));
+      if (i >= steps) { clearInterval(rec.timer); rec.timer = null; rec.el.volume = to; }
+    }, 50);
+    return true;
+  }
+
+  function stopLoop(name, fadeMs) {
+    var rec = loops[name];
+    if (!rec) return;
+    var a = rec.el;
+    var ms = fadeMs == null ? 1200 : fadeMs;
+    if (rec.timer) { clearInterval(rec.timer); rec.timer = null; }
+    var from = a.volume, steps = Math.max(1, Math.round(ms / 50)), i = 0;
+    rec.timer = setInterval(function () {
+      i++;
+      a.volume = Math.max(0, from * (1 - i / steps));
+      if (i >= steps) {
+        clearInterval(rec.timer); rec.timer = null;
+        try { a.pause(); } catch (e) {}
+        a.volume = 0;
+      }
+    }, 50);
+    /* 兜底：即使定时器被浏览器降频，到点也强制停 */
+    setTimeout(function () {
+      if (a.volume < 0.02 || i >= steps) {
+        try { a.pause(); } catch (e) {}
+        a.volume = 0;
+      }
+    }, ms + 400);
+  }
+
+  function loopStats(name) {
+    var rec = loops[name];
+    if (!rec) return null;
+    return { src: String(rec.el.src).split('/').pop(), paused: rec.el.paused, v: rec.el.volume, t: rec.el.currentTime };
+  }
+
   function unlock() {
     getAudio();
   }
@@ -146,6 +206,9 @@
     unlock: unlock,
     seek: seek,
     playSfx: playSfx,
+    startLoop: startLoop,
+    stopLoop: stopLoop,
+    loopStats: loopStats,
     current: function () { return 'theme'; },
     list: function () { return [{ key: 'theme', name: '背景音乐', mode: '' }]; },
     state: function () {
