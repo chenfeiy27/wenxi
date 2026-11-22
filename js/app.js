@@ -1150,28 +1150,13 @@
     }
   }
 
-  function renderSndTracks() {
-    if (!el.sndTracks || !window.Music) return;
-    var items = Music.list();
-    var cur = Music.current();
-    var html = '';
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      html += '<li class="snd-track' + (it.key === cur ? ' is-on' : '') + '" data-track="' + it.key + '">' +
-        '<span class="t-page">' + it.page + '</span>' +
-        '<span class="t-note">《' + it.name + '》' + it.mode + '</span>' +
-        '<span class="t-desc">' + it.desc + '</span>' +
-        '</li>';
-    }
-    el.sndTracks.innerHTML = html;
-  }
+  function renderSndTracks() { /* 面板不展示曲目，仅随页面自动换曲 */ }
 
   function syncSoundUI() {
     if (el.swSfx) el.swSfx.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
     if (el.swMusic) el.swMusic.setAttribute('aria-pressed', state.music ? 'true' : 'false');
     if (el.sndVol) { el.sndVol.value = state.musicVol; }
     if (el.sndVolNum) el.sndVolNum.textContent = state.musicVol;
-    renderSndTracks();
     syncSoundChip();
     syncSndSeg();
   }
@@ -1555,16 +1540,6 @@
     if (el.soundClose) el.soundClose.addEventListener('click', closeSound);
     if (el.swSfx) el.swSfx.addEventListener('click', toggleSfx);
     if (el.swMusic) el.swMusic.addEventListener('click', toggleMusic);
-    if (el.sndTracks) {
-      el.sndTracks.addEventListener('click', function (e) {
-        var li = e.target.closest ? e.target.closest('.snd-track') : null;
-        if (!li) return;
-        var key = li.getAttribute('data-track');
-        var view = key === 'tiao' ? 'adjust' : (key === 'lu' ? 'records' : 'today');
-        closeSound();
-        setView(view);
-      });
-    }
     if (el.sndVol) {
       el.sndVol.addEventListener('input', function () {
         state.musicVol = Number(el.sndVol.value) || 0;
