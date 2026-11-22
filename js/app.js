@@ -23,7 +23,8 @@
   var LS_THEME = 'wenxi.theme.v3';
   var LS_COACH = 'wenxi.coach.v3';
   var PRESS_SECONDS = 1.8;
-  var BREATH_IN = 4, BREATH_HOLD = 1, BREATH_OUT = 4;
+  /* 呼吸节奏与《02 用户场景说明书》场景三、香事小游戏统一为 4-7-8（一轮 19 秒） */
+  var BREATH_IN = 4, BREATH_HOLD = 7, BREATH_OUT = 8;
   var BREATH_CYCLE = BREATH_IN + BREATH_HOLD + BREATH_OUT;
   var BASELINE = { restHR: 68, restHRV: 62 };
 
