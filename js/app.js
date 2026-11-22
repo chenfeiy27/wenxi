@@ -22,6 +22,9 @@
   /* ---------- 常量 ---------- */
   var LS_THEME = 'wenxi.theme.v3';
   var LS_COACH = 'wenxi.coach.v3';
+  var LS_SOUND = 'wenxi.sound.v3';
+  var LS_MUSIC = 'wenxi.music.v3';
+  var LS_MUSIC_VOL = 'wenxi.musicVol.v3';
   var PRESS_SECONDS = 1.8;
   /* 呼吸节奏与《02 用户场景说明书》场景三、香事小游戏统一为 4-7-8（一轮 19 秒） */
   var BREATH_IN = 4, BREATH_HOLD = 7, BREATH_OUT = 8;
@@ -110,6 +113,9 @@
     calendar: $('#calendar'), trendBig: $('#trendBig'), eventLog: $('#eventLog'),
 
     refSheet: $('#refSheet'), refClose: $('#refClose'),
+    soundSheet: $('#soundSheet'), soundClose: $('#soundClose'),
+    swSfx: $('#swSfx'), swMusic: $('#swMusic'),
+    sndTracks: $('#sndTracks'), sndVol: $('#sndVol'), sndVolNum: $('#sndVolNum'),
     coach: $('#coach'), coachOk: $('#coachOk'),
     toast: $('#toast')
   };
@@ -150,6 +156,8 @@
     runElapsed: 0,
     auto: 'semi',
     sound: false,
+    music: true,
+    musicVol: 45,
     lights: 0,
     lightsMinutes: 42,
     log: [],
@@ -248,6 +256,7 @@
     closeSheet();
     state.view = v;
     body.setAttribute('data-view', v);
+    if (window.Music && state.music) { try { Music.page(v); } catch (e) {} }
     for (var k in el.views) {
       if (!el.views.hasOwnProperty(k)) continue;
       el.views[k].classList.toggle('is-on', k === v);
@@ -1126,10 +1135,64 @@
   function openRef() { hideCoach(); if (window.selectRefPage) window.selectRefPage('culture'); el.refSheet.classList.add('is-on'); el.refSheet.setAttribute('aria-hidden', 'false'); el.btnRef.setAttribute('aria-expanded', 'true'); }
   function closeRef() { el.refSheet.classList.remove('is-on'); el.refSheet.setAttribute('aria-hidden', 'true'); el.btnRef.setAttribute('aria-expanded', 'false'); if (window.selectRefPage) window.selectRefPage('culture'); }
 
-  function toggleSound() {
-    state.sound = !state.sound;
-    el.btnSound.classList.toggle('is-on', state.sound);
-    el.btnSound.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
+  /* ---------- 声 · 功能页：音效 / 音乐 ---------- */
+  function syncSoundChip() {
+    var any = state.sound || state.music;
+    el.btnSound.classList.toggle('is-on', any);
+    el.btnSound.setAttribute('aria-pressed', any ? 'true' : 'false');
+    el.btnSound.title = '声音（快捷键 M）· 音效' + (state.sound ? '开' : '关') + ' · 音乐' + (state.music ? '开' : '关');
+  }
+
+  function syncSndSeg() {
+    var mode = !state.music ? 'off' : (state.musicVol >= 55 ? 'music' : 'on');
+    for (var i = 0; i < el.soundSeg.length; i++) {
+      el.soundSeg[i].classList.toggle('is-on', el.soundSeg[i].getAttribute('data-snd') === mode);
+    }
+  }
+
+  function renderSndTracks() {
+    if (!el.sndTracks || !window.Music) return;
+    var items = Music.list();
+    var cur = Music.current();
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      html += '<li class="snd-track' + (it.key === cur ? ' is-on' : '') + '" data-track="' + it.key + '">' +
+        '<span class="t-page">' + it.page + '</span>' +
+        '<span class="t-note">《' + it.name + '》' + it.mode + '</span>' +
+        '<span class="t-desc">' + it.desc + '</span>' +
+        '</li>';
+    }
+    el.sndTracks.innerHTML = html;
+  }
+
+  function syncSoundUI() {
+    if (el.swSfx) el.swSfx.setAttribute('aria-pressed', state.sound ? 'true' : 'false');
+    if (el.swMusic) el.swMusic.setAttribute('aria-pressed', state.music ? 'true' : 'false');
+    if (el.sndVol) { el.sndVol.value = state.musicVol; }
+    if (el.sndVolNum) el.sndVolNum.textContent = state.musicVol;
+    renderSndTracks();
+    syncSoundChip();
+    syncSndSeg();
+  }
+
+  function openSound() {
+    if (!el.soundSheet) return;
+    hideCoach();
+    renderSndTracks();
+    el.soundSheet.classList.add('is-on');
+    el.soundSheet.setAttribute('aria-hidden', 'false');
+    el.btnSound.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeSound() {
+    if (!el.soundSheet) return;
+    el.soundSheet.classList.remove('is-on');
+    el.soundSheet.setAttribute('aria-hidden', 'true');
+    el.btnSound.setAttribute('aria-expanded', 'false');
+  }
+
+  function applySfx() {
     if (window.AudioFX) {
       try {
         AudioFX.setEnabled(state.sound);
@@ -1137,10 +1200,59 @@
         else AudioFX.breathe(false);
       } catch (e) {}
     }
-    for (var i = 0; i < el.soundSeg.length; i++) {
-      el.soundSeg[i].classList.toggle('is-on', el.soundSeg[i].getAttribute('data-snd') === (state.sound ? 'on' : 'off'));
+  }
+
+  function applyMusic() {
+    if (!window.Music) return;
+    try {
+      Music.setVolume(state.musicVol / 100);
+      if (state.music) {
+        Music.page(state.view);
+        Music.setEnabled(true);
+      } else {
+        Music.setEnabled(false);
+      }
+    } catch (e) {}
+  }
+
+  /* 声按钮：打开面板（不再直接静音） */
+  function toggleSound() {
+    openSound();
+  }
+
+  function toggleSfx() {
+    state.sound = !state.sound;
+    try { localStorage.setItem(LS_SOUND, state.sound ? '1' : '0'); } catch (e) {}
+    applySfx();
+    syncSoundUI();
+    showToast(state.sound ? '音效 · 开' : '音效 · 关');
+  }
+
+  function toggleMusic() {
+    state.music = !state.music;
+    try { localStorage.setItem(LS_MUSIC, state.music ? '1' : '0'); } catch (e) {}
+    applyMusic();
+    syncSoundUI();
+    showToast(state.music ? '音乐 · 开' : '音乐 · 关');
+  }
+
+  function setSndMode(mode) {
+    if (mode === 'off') {
+      state.music = false;
+      state.musicVol = 45;
+    } else if (mode === 'on') {
+      state.music = true;
+      state.musicVol = 38;
+    } else {
+      state.music = true;
+      state.musicVol = 62;
     }
-    showToast(state.sound ? '声 · 开' : '声 · 关');
+    try {
+      localStorage.setItem(LS_MUSIC, state.music ? '1' : '0');
+      localStorage.setItem(LS_MUSIC_VOL, String(state.musicVol));
+    } catch (e) {}
+    applyMusic();
+    syncSoundUI();
   }
 
   /* ---------- 第二层：点图标展开的详情 ---------- */
@@ -1322,6 +1434,39 @@
     // 首次交互解锁音频
     doc.addEventListener('pointerdown', function once() {
       if (window.AudioFX) { try { AudioFX.unlock(); } catch (e) {} }
+  if (window.Music) { try { Music.unlock(); } catch (e) {} }
+  /* 恢复上次的声音设置（音效默认关、音乐默认关，与文档一致） */
+  try {
+    var _snd = localStorage.getItem(LS_SOUND);
+    var _mus = localStorage.getItem(LS_MUSIC);
+    var _vol = localStorage.getItem(LS_MUSIC_VOL);
+    if (_snd === '1') state.sound = true;
+    if (_mus === '0') state.music = false;
+    if (_vol != null && !isNaN(Number(_vol))) state.musicVol = Number(_vol);
+  } catch (e) {}
+  applySfx();
+  if (window.Music) { try { Music.setVolume(state.musicVol / 100); } catch (e) {} }
+  syncSoundUI();
+  /* 浏览器要求先有用户手势才能出声：进门页点一下即可起播 */
+  var _started = false;
+  function _firstGesture() {
+    if (_started) return;
+    _started = true;
+    if (window.Music) {
+      try { Music.unlock(); } catch (e) {}
+      if (state.music) applyMusic();
+    }
+    if (window.AudioFX) { try { AudioFX.unlock(); } catch (e) {} }
+  }
+  document.addEventListener('pointerdown', _firstGesture, true);
+  document.addEventListener('keydown', _firstGesture, true);
+  /* 进门页也会被点到，这里再兜一次：进入主界面后若还没起播就补上 */
+  var _gateTimer = setInterval(function () {
+    if (!state.music) return;
+    if (window.Music && Music.isEnabled()) { clearInterval(_gateTimer); return; }
+    if (state.entered) { _firstGesture(); clearInterval(_gateTimer); }
+  }, 600);
+  if (window.Music) { try { Music.unlock(); } catch (e) {} }
       doc.removeEventListener('pointerdown', once);
     }, { passive: true });
 
@@ -1404,6 +1549,32 @@
     el.btnRef.addEventListener('click', openRef);
     el.refClose.addEventListener('click', closeRef);
     el.refSheet.addEventListener('click', function (e) { if (e.target === el.refSheet) closeRef(); });
+
+  if (el.soundSheet) {
+    el.soundSheet.addEventListener('click', function (e) { if (e.target === el.soundSheet) closeSound(); });
+    if (el.soundClose) el.soundClose.addEventListener('click', closeSound);
+    if (el.swSfx) el.swSfx.addEventListener('click', toggleSfx);
+    if (el.swMusic) el.swMusic.addEventListener('click', toggleMusic);
+    if (el.sndTracks) {
+      el.sndTracks.addEventListener('click', function (e) {
+        var li = e.target.closest ? e.target.closest('.snd-track') : null;
+        if (!li) return;
+        var key = li.getAttribute('data-track');
+        var view = key === 'tiao' ? 'adjust' : (key === 'lu' ? 'records' : 'today');
+        closeSound();
+        setView(view);
+      });
+    }
+    if (el.sndVol) {
+      el.sndVol.addEventListener('input', function () {
+        state.musicVol = Number(el.sndVol.value) || 0;
+        if (el.sndVolNum) el.sndVolNum.textContent = state.musicVol;
+        try { localStorage.setItem(LS_MUSIC_VOL, String(state.musicVol)); } catch (e) {}
+        applyMusic();
+        syncSndSeg();
+      });
+    }
+  }
     el.btnHelp.addEventListener('click', showCoach);
     doc.getElementById('helpClose').addEventListener('click', hideCoach);
     if (el.coachNext) el.coachNext.addEventListener('click', coachNext);
@@ -1440,8 +1611,7 @@
     for (var g = 0; g < el.soundSeg.length; g++) {
       (function (btn) {
         btn.addEventListener('click', function () {
-          var on = btn.getAttribute('data-snd') === 'on';
-          if (on !== state.sound) toggleSound();
+          setSndMode(btn.getAttribute('data-snd'));
         });
       })(el.soundSeg[g]);
     }
@@ -1486,7 +1656,7 @@
     if (k === 'd') { startDemo(); return; }
     if (k === 'l') { toggleTheme(); return; }
     if (k === 'p') { togglePet(); return; }
-    if (k === 'm') { toggleSound(); return; }
+    if (k === 'm') { el.soundSheet.classList.contains('is-on') ? closeSound() : openSound(); return; }
     if (k === 'k') { el.refSheet.classList.contains('is-on') ? closeRef() : openRef(); return; }
     if (k === 'h') { showCoach(); return; }
     if (k === '1') { setView('today'); return; }
