@@ -1,62 +1,53 @@
 /* ============================================================
-   闻息 · music.js（文件播放版）
-   用本地音频文件 + <audio> 元素播放，不依赖 WebAudio：
-     · 两首曲子：今日《息》 / 调节与记录《调》
-     · 双元素交叉淡入淡出，切换页面不突兀
-     · 同时提供点燃音效的一键播放（playSfx）
-   文件位于 assets/audio/，离线可用、无版权素材。
+   闻息 · music.js（单曲文件版）
+   全站一曲：assets/audio/theme.mp3，循环播放
+     · 用 <audio> 播放，不依赖 WebAudio
+     · 开关做淡入淡出，避免突然出声或硬切
+     · 点燃音效独立：assets/audio/ignite.wav
    ============================================================ */
 (function () {
   'use strict';
 
-  var FILE = {
-    xi: 'assets/audio/guqin_xi.wav',
-    tiao: 'assets/audio/guqin_tiao.wav'
-  };
-  var SFX_FILE = {
-    ignite: 'assets/audio/ignite.wav'
-  };
+  var MUSIC_SRC = 'assets/audio/theme.mp3';
+  var SFX_FILE = { ignite: 'assets/audio/ignite.wav' };
 
-  var els = {};          /* 音乐元素池 */
+  var audio = null;
   var sfxPool = [];
+  var lastSfx = null;
   var enabled = false;
   var volume = 0.45;
-  var current = 'xi';
-  var fadeTimers = {};
-  var lastSfx = null;
+  var fadeTimer = null;
 
-  function el(key) {
-    if (!els[key]) {
-      var a = new Audio();
-      a.src = FILE[key];
-      a.loop = true;
-      a.preload = 'auto';
-      a.volume = 0;
-      els[key] = a;
+  function getAudio() {
+    if (!audio) {
+      audio = new Audio();
+      audio.src = MUSIC_SRC;
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.volume = 0;
     }
-    return els[key];
+    return audio;
   }
 
   function targetVolume() {
-    return Math.max(0, Math.min(1, 0.55 * (volume / 0.45)));
+    return Math.max(0, Math.min(1, 0.6 * (volume / 0.45)));
   }
 
-  function fade(key, to, ms, onDone) {
-    var a = el(key);
-    if (fadeTimers[key]) {
-      clearInterval(fadeTimers[key]);
-      fadeTimers[key] = null;
+  function fadeTo(to, ms, onDone) {
+    var a = getAudio();
+    if (fadeTimer) {
+      clearInterval(fadeTimer);
+      fadeTimer = null;
     }
     var from = a.volume;
     var steps = Math.max(1, Math.round(ms / 50));
     var i = 0;
-    fadeTimers[key] = setInterval(function () {
+    fadeTimer = setInterval(function () {
       i++;
-      var v = from + (to - from) * (i / steps);
-      a.volume = Math.max(0, Math.min(1, v));
+      a.volume = Math.max(0, Math.min(1, from + (to - from) * (i / steps)));
       if (i >= steps) {
-        clearInterval(fadeTimers[key]);
-        fadeTimers[key] = null;
+        clearInterval(fadeTimer);
+        fadeTimer = null;
         a.volume = to;
         if (onDone) onDone();
       }
@@ -70,30 +61,19 @@
     } catch (e) {}
   }
 
-  function keyFor(view) {
-    return view === 'today' ? 'xi' : 'tiao';
-  }
-
-  /* ---------------- 对外接口 ---------------- */
   function start() {
     enabled = true;
-    var key = current;
-    var a = el(key);
+    var a = getAudio();
     if (a.paused) playSafe(a);
-    fade(key, targetVolume(), 1800);
-    Object.keys(els).forEach(function (k) {
-      if (k === key) return;
-      var other = els[k];
-      if (!other.paused) fade(k, 0, 700, function () { try { other.pause(); } catch (e) {} });
-    });
+    fadeTo(targetVolume(), 2000);
     return true;
   }
 
   function stop() {
     enabled = false;
-    Object.keys(els).forEach(function (k) {
-      var a = els[k];
-      fade(k, 0, 900, function () { try { a.pause(); } catch (e) {} });
+    var a = getAudio();
+    fadeTo(0, 900, function () {
+      try { a.pause(); } catch (e) {}
     });
   }
 
@@ -107,28 +87,12 @@
     return enabled;
   }
 
-  function page(view) {
-    var key = keyFor(view);
-    if (key === current) return;
-    current = key;
-    if (!enabled) return;
-    var next = el(key);
-    var prevKey = null;
-    Object.keys(els).forEach(function (k) {
-      if (k !== key && !els[k].paused) prevKey = k;
-    });
-    if (next.paused) playSafe(next);
-    fade(key, targetVolume(), 1500);
-    if (prevKey) {
-      var prev = el(prevKey);
-      fade(prevKey, 0, 900, function () { try { prev.pause(); } catch (e) {} });
-    }
-  }
+  /* 全站一曲，切页不换歌；保留接口以兼容旧调用 */
+  function page() {}
 
   function setVolume(v) {
     volume = Math.max(0, Math.min(1, v));
-    if (!enabled) return;
-    Object.keys(els).forEach(function (k) { el(k).volume = targetVolume(); });
+    if (enabled && audio) audio.volume = targetVolume();
   }
 
   function playSfx(name) {
@@ -156,8 +120,7 @@
   }
 
   function unlock() {
-    el('xi');
-    el('tiao');
+    getAudio();
   }
 
   window.Music = {
@@ -169,25 +132,17 @@
     setVolume: setVolume,
     unlock: unlock,
     playSfx: playSfx,
-    current: function () { return current; },
-    list: function () {
-      return [
-        { key: 'xi', name: '息', mode: '羽调' },
-        { key: 'tiao', name: '调', mode: '宫调' }
-      ];
-    },
+    current: function () { return 'theme'; },
+    list: function () { return [{ key: 'theme', name: '背景音乐', mode: '' }]; },
     state: function () {
-      var a = els[current];
+      var a = audio;
       if (!a) return 'none';
       if (a.paused) return 'paused';
       return a.readyState >= 2 ? 'playing' : 'loading';
     },
-    level: function () {
-      var a = els[current];
-      return a ? a.volume : -1;
-    },
+    level: function () { return audio ? audio.volume : -1; },
     stats: function () {
-      var a = els[current];
+      var a = audio;
       return a ? { paused: a.paused, time: a.currentTime, ready: a.readyState, vol: a.volume, dur: a.duration } : null;
     },
     sfx: function () {
