@@ -25,6 +25,11 @@
       audio.loop = true;
       audio.preload = 'auto';
       audio.volume = 0;
+      /* 双保险：loop 属性 + ended 事件兜底（部分浏览器在 seek 后不触发 loop） */
+      audio.addEventListener('ended', function () {
+        try { audio.currentTime = 0; } catch (e) {}
+        if (enabled) playSafe(audio);
+      });
     }
     return audio;
   }
@@ -64,6 +69,7 @@
   function start() {
     enabled = true;
     var a = getAudio();
+    a.loop = true;
     if (a.paused) playSafe(a);
     fadeTo(targetVolume(), 2000);
     return true;
@@ -119,6 +125,13 @@
     return true;
   }
 
+  function seek(t) {
+    var a = getAudio();
+    if (!a.duration || isNaN(a.duration)) return false;
+    try { a.currentTime = Math.max(0, Math.min(a.duration - 0.15, t)); } catch (e) { return false; }
+    return true;
+  }
+
   function unlock() {
     getAudio();
   }
@@ -131,6 +144,7 @@
     page: page,
     setVolume: setVolume,
     unlock: unlock,
+    seek: seek,
     playSfx: playSfx,
     current: function () { return 'theme'; },
     list: function () { return [{ key: 'theme', name: '背景音乐', mode: '' }]; },
