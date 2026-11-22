@@ -155,7 +155,7 @@
     pressStart: 0,
     runElapsed: 0,
     auto: 'semi',
-    sound: false,
+    sound: true,
     music: true,
     musicVol: 45,
     lights: 0,
@@ -543,7 +543,8 @@
     body.classList.add('is-igniting');
     smokeStyleForState();
     if (el.censerHint) el.censerHint.textContent = '烟起 · 香暖';
-    if (window.AudioFX) { try { AudioFX.ignite(); } catch (e) {} }
+    if (window.Music && state.sound) { try { Music.playSfx('ignite'); } catch (e) {} }
+      if (window.AudioFX) { try { AudioFX.ignite(); } catch (e) {} }
     syncRunUI();
     if (reduceMotion) completeIgnition(state.paused);
   }
@@ -1425,7 +1426,7 @@
     var _snd = localStorage.getItem(LS_SOUND);
     var _mus = localStorage.getItem(LS_MUSIC);
     var _vol = localStorage.getItem(LS_MUSIC_VOL);
-    if (_snd === '1') state.sound = true;
+    if (_snd === '0') state.sound = false;
     if (_mus === '0') state.music = false;
     if (_vol != null && !isNaN(Number(_vol))) state.musicVol = Number(_vol);
   } catch (e) {}
