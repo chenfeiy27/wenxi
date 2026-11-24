@@ -1428,3 +1428,96 @@ html[data-skin="vintage"] .tool img { width: 30px; height: 30px; }
 html[data-skin="vintage"] .tool { font-size: 17.5px; }
 
 html[data-skin="vintage"] .run-bar { height: 5px; }
+
+
+/* ============================================================
+   第三轮：导航居中于香炉正上方、两侧卡片放大并向中间收、
+   右上角入口放大
+   ============================================================ */
+
+html[data-skin="vintage"] .topbar { position: relative; }
+
+/* 导航绝对居中，不再受左右两侧宽度影响 */
+html[data-skin="vintage"] .tabs {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  justify-self: auto;
+}
+
+html[data-skin="vintage"] .tab { font-size: 21px; padding: 6px 4px 11px; }
+
+/* 右上角三个入口放大 */
+html[data-skin="vintage"] .top-actions { gap: clamp(20px, 2.4vw, 40px); }
+html[data-skin="vintage"] .tool { font-size: 19.5px; gap: 10px; }
+html[data-skin="vintage"] .tool img { width: 36px; height: 36px; }
+html[data-skin="vintage"] .tool-caret { width: 18px; height: 18px; }
+
+/* 两侧卡片放大并向中间靠 */
+html[data-skin="vintage"] #view-today .stage {
+  grid-template-columns: 226px minmax(0, 1fr) 226px;
+  gap: clamp(10px, 1.6vw, 30px);
+  padding: 4px clamp(4px, 1vw, 18px) 0;
+}
+
+html[data-skin="vintage"] .rail {
+  width: 226px;
+  gap: 26px;
+  padding: 0 8px;
+}
+
+html[data-skin="vintage"] .rail-card,
+html[data-skin="vintage"] .rail-btn {
+  width: 196px;
+  height: 262px;
+  padding: 24px 16px 30px;
+}
+
+html[data-skin="vintage"] .rail-card[data-panel="watch"] .rail-art { width: 104px; height: 104px; }
+html[data-skin="vintage"] .rail-card[data-panel="diff"] .rail-art { width: 128px; height: 104px; }
+html[data-skin="vintage"] .rail-card[data-panel="body"] .rail-art { width: 144px; height: 84px; }
+html[data-skin="vintage"] .rail-card[data-panel="scent"] .rail-art { width: 128px; height: 92px; }
+
+html[data-skin="vintage"] .rail-title { margin-top: 10px; font-size: 17px; letter-spacing: .16em; }
+html[data-skin="vintage"] .rail-status { margin-top: 6px; font-size: 14px; }
+html[data-skin="vintage"] .rail-meta { margin-top: 3px; font-size: 14px; }
+html[data-skin="vintage"] .rail-big { font-size: 27px; }
+html[data-skin="vintage"] .rail-big small { font-size: 12px; }
+
+/* 签耳跟着卡片一起往外挪一点 */
+html[data-skin="vintage"] .rail-left .rail-toggle { left: -30px; }
+html[data-skin="vintage"] .rail-right .rail-toggle { right: -30px; }
+
+@media (max-width: 1180px) {
+  html[data-skin="vintage"] #view-today .stage { grid-template-columns: 190px minmax(0, 1fr) 190px; }
+  html[data-skin="vintage"] .rail { width: 190px; }
+  html[data-skin="vintage"] .rail-card,
+  html[data-skin="vintage"] .rail-btn { width: 166px; height: 224px; padding: 20px 12px 24px; }
+  html[data-skin="vintage"] .rail-card[data-panel="watch"] .rail-art { width: 88px; height: 88px; }
+  html[data-skin="vintage"] .rail-card[data-panel="diff"] .rail-art { width: 108px; height: 88px; }
+  html[data-skin="vintage"] .rail-card[data-panel="body"] .rail-art { width: 122px; height: 70px; }
+  html[data-skin="vintage"] .rail-card[data-panel="scent"] .rail-art { width: 108px; height: 78px; }
+}
+
+
+/* 主花：双帧交叉淡入，消除 12 帧的跳帧感 */
+html[data-skin="vintage"] .flower-stage { position: relative; }
+html[data-skin="vintage"] .flower-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+html[data-skin="vintage"] #tuneFlowerB { opacity: 0; will-change: opacity; }
+
+
+/* 线稿香炉：给一点纸面投影，白底上也能立住 */
+html[data-skin="vintage"] .censer-wrap .censer-art {
+  filter: drop-shadow(0 10px 18px rgba(20, 28, 38, .18));
+}
+html[data-skin="vintage"][data-theme="day"] .censer-wrap .censer-art {
+  filter: drop-shadow(0 10px 16px rgba(104, 82, 56, .16));
+}
+html[data-skin="vintage"] .censer-wrap .glow-layer { filter: none; }

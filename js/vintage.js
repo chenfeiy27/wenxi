@@ -161,8 +161,10 @@
   var viewAdjust = $('#view-adjust');
 
   var SEQ = [];
-  var seqState = { raf: 0, start: 0, frame: 0, running: false };
+  var seqState = { raf: 0, start: 0, i0: -1, i1: -1, running: false };
   var SEQ_MS = 3600;          // 一轮 3.6 秒（交接说明的建议值）
+  var frameA = $('#tuneFlowerA');
+  var frameB = $('#tuneFlowerB');
 
   for (var i = 1; i <= FRAMES; i++) {
     var im = new Image();
@@ -170,22 +172,30 @@
     SEQ.push(im);
   }
 
+  function seqSrc(idx) {
+    return 'assets/vintage/flower/f' + (idx < 9 ? '0' + (idx + 1) : (idx + 1)) + '.webp';
+  }
+
+  /* 12 帧只有 12 个关键姿态，直接换图会一顿一顿。
+     这里用两张 img 叠着做连续交叉淡入：任意时刻只差一个混合量，
+     观感是连续的，不需要更多素材。 */
   function seqTick(now) {
     if (!seqState.running) return;
     if (!seqState.start) seqState.start = now;
     var t = ((now - seqState.start) % SEQ_MS) / SEQ_MS;
-    // 01 最收拢、06 最舒展：用余弦让两端缓一点
-    var idx = Math.round(t * (FRAMES - 1));
-    idx = clamp(idx, 0, FRAMES - 1);
-    if (idx !== seqState.frame && flowerImg) {
-      seqState.frame = idx;
-      flowerImg.src = SEQ[idx].src;
-    }
+    var pos = t * FRAMES;
+    var i0 = Math.floor(pos) % FRAMES;
+    var i1 = (i0 + 1) % FRAMES;
+    var f = pos - Math.floor(pos);
+    if (!frameA || !frameB) return;
+    if (i0 !== seqState.i0) { frameA.src = seqSrc(i0); seqState.i0 = i0; }
+    if (i1 !== seqState.i1) { frameB.src = seqSrc(i1); seqState.i1 = i1; }
+    frameB.style.opacity = f.toFixed(3);
     seqState.raf = window.requestAnimationFrame(seqTick);
   }
 
   function startSequence() {
-    if (seqState.running || !flowerImg) return;
+    if (seqState.running || !frameA) return;
     seqState.running = true;
     seqState.start = 0;
     seqState.raf = window.requestAnimationFrame(seqTick);
