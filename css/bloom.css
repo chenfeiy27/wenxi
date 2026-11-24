@@ -1,0 +1,31 @@
+/* 玉兰开花态叠层
+   与收拢态同机位、同光照渲染，点香后淡入——两帧机身完全重合，只有花瓣在动。
+   状态由 app.js 已有的 body.is-igniting / body.is-lit 驱动，不新增 JS。 */
+
+.censer-art.censer-bloom {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 2.1s cubic-bezier(.34, .1, .28, 1);
+  will-change: opacity;
+}
+
+/* 长按进度过半就开始微微透出一点花瓣 */
+body.is-igniting .censer-art.censer-bloom {
+  opacity: .35;
+  transition-duration: .6s;
+}
+
+/* 点香完成：花瓣完全绽开 */
+body.is-lit .censer-art.censer-bloom {
+  opacity: 1;
+  transition-duration: 2.1s;
+}
+
+/* 熄香：收回得比绽开慢一点，像花合拢 */
+body:not(.is-lit):not(.is-igniting) .censer-art.censer-bloom {
+  transition-duration: 2.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .censer-art.censer-bloom { transition-duration: .01ms; }
+}
