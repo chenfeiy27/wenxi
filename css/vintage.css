@@ -5,8 +5,8 @@
    ============================================================ */
 
 html[data-skin="vintage"] {
-  --serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "SimSun", serif;
-  --sans: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
 
   /* 白天 */
   --field: #F0E5D1;
@@ -1521,3 +1521,158 @@ html[data-skin="vintage"][data-theme="day"] .censer-wrap .censer-art {
   filter: drop-shadow(0 10px 16px rgba(104, 82, 56, .16));
 }
 html[data-skin="vintage"] .censer-wrap .glow-layer { filter: none; }
+
+
+/* ============================================================
+   第四轮：水彩质感
+   ============================================================ */
+
+/* 植物暗纹：铺满边缘，比之前更清楚 */
+html[data-skin="vintage"] .vintage-bg .vg-motif {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: .5;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+html[data-skin="vintage"] .vintage-bg .m1 {
+  left: -6%; bottom: -10%; width: 42vw; height: 42vw;
+  background-image: url("../assets/vintage/ink/chenxiang-branch.webp");
+}
+html[data-skin="vintage"] .vintage-bg .m2 {
+  right: -8%; top: -12%; width: 38vw; height: 38vw;
+  background-image: url("../assets/vintage/ink/bamboo.webp");
+  transform: scaleX(-1);
+}
+html[data-skin="vintage"] .vintage-bg .m3 {
+  left: 26%; top: -18%; width: 30vw; height: 30vw;
+  background-image: url("../assets/vintage/ink/bamboo-leaf.webp");
+}
+html[data-skin="vintage"] .vintage-bg .m4 {
+  left: -10%; top: 12%; width: 26vw; height: 26vw;
+  background-image: url("../assets/vintage/ink/chenxiang-petal.webp");
+  opacity: .42;
+}
+html[data-skin="vintage"] .vintage-bg .m5 {
+  right: -6%; bottom: -6%; width: 34vw; height: 34vw;
+  background-image: url("../assets/vintage/ink/dragon-fruit.webp");
+  opacity: .46;
+}
+html[data-skin="vintage"] .vintage-bg .m6 {
+  right: 22%; bottom: -14%; width: 22vw; height: 22vw;
+  background-image: url("../assets/vintage/ink/bamboo-leaf.webp");
+  transform: scaleY(-1) rotate(8deg);
+  opacity: .36;
+}
+
+/* 水洗晕染：大块不均匀的湿边 */
+html[data-skin="vintage"] .vintage-bg .vg-wash {
+  position: absolute;
+  inset: -8%;
+  background-image: url("../assets/vintage/tex/wash.webp");
+  background-size: cover;
+  background-position: center;
+  opacity: .5;
+  mix-blend-mode: multiply;
+}
+html[data-skin="vintage"][data-theme="night"] .vintage-bg .vg-wash {
+  opacity: .62;
+  mix-blend-mode: soft-light;
+}
+
+/* 纸纹：颗粒感 */
+html[data-skin="vintage"] .vintage-bg .vg-paper {
+  position: absolute;
+  inset: 0;
+  background-image: url("../assets/vintage/tex/paper.webp");
+  background-size: 420px 420px;
+  opacity: .55;
+  mix-blend-mode: overlay;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper { opacity: .62; }
+
+/* 四角压暗，像水彩纸的湿边 */
+html[data-skin="vintage"] .vintage-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 46%, rgba(0, 0, 0, 0) 52%, rgba(20, 26, 34, .28) 100%),
+    radial-gradient(80% 60% at 12% 8%, rgba(30, 38, 48, .22), rgba(0, 0, 0, 0) 70%),
+    radial-gradient(70% 60% at 92% 88%, rgba(30, 38, 48, .2), rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+
+/* 香炉：放大到原来的 1.28 倍 */
+html[data-skin="vintage"] .censer-wrap {
+  width: min(56vmin, 520px);
+}
+
+/* 卡片再往中间靠、再放大一点 */
+html[data-skin="vintage"] #view-today .stage {
+  grid-template-columns: 250px minmax(0, 1fr) 250px;
+  gap: clamp(0px, .4vw, 8px);
+  padding: 4px clamp(2px, .6vw, 10px) 0;
+}
+html[data-skin="vintage"] .rail { width: 250px; }
+html[data-skin="vintage"] .rail-card,
+html[data-skin="vintage"] .rail-btn {
+  width: 214px;
+  height: 288px;
+  padding: 26px 16px 32px;
+}
+html[data-skin="vintage"] .rail-card[data-panel="watch"] .rail-art { width: 116px; height: 116px; }
+html[data-skin="vintage"] .rail-card[data-panel="diff"] .rail-art { width: 146px; height: 116px; }
+html[data-skin="vintage"] .rail-card[data-panel="body"] .rail-art { width: 162px; height: 92px; }
+html[data-skin="vintage"] .rail-card[data-panel="scent"] .rail-art { width: 146px; height: 104px; }
+
+/* 右上角：三个入口基线对齐 */
+html[data-skin="vintage"] .top-actions { align-items: center; }
+html[data-skin="vintage"] .tool {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  height: 40px;
+  padding: 0 2px;
+}
+html[data-skin="vintage"] .tool img { flex: 0 0 auto; }
+html[data-skin="vintage"] .tool span { line-height: 1; transform: translateY(0); }
+html[data-skin="vintage"] .more-wrap { display: flex; align-items: center; }
+
+/* 开花：只让花瓣那片轻轻张开，风格不变 */
+html[data-skin="vintage"] .censer-art.censer-bloom {
+  --bloom-cx: 50%;
+  --bloom-cy: 40%;
+  transform-origin: var(--bloom-cx) var(--bloom-cy);
+  clip-path: none;
+  filter: saturate(1.08) brightness(1.04);
+  transform: scale(1);
+  transition: opacity 2.1s cubic-bezier(.34, .1, .28, 1),
+              transform 2.1s cubic-bezier(.34, .1, .28, 1);
+}
+html[data-skin="vintage"] body.is-lit .censer-art.censer-bloom {
+  transform: scale(1.055);
+  transition: opacity 1.6s ease, transform 1.9s cubic-bezier(.2, .7, .3, 1);
+}
+html[data-skin="vintage"] body.is-igniting:not(.is-lit) .censer-art.censer-bloom {
+  transform: scale(1.02);
+  transition: opacity .6s ease, transform 1.2s ease;
+}
+
+
+/* 白天：水洗与纸纹压低，别把暖宣纸压成灰 */
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-wash {
+  opacity: .26;
+  mix-blend-mode: soft-light;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper { opacity: .34; }
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-motif { opacity: .34; mix-blend-mode: multiply; }
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-veil {
+  background:
+    linear-gradient(180deg, rgba(244, 234, 214, .55), rgba(238, 226, 203, .30)),
+    radial-gradient(90% 70% at 50% 40%, rgba(255, 250, 240, .35), rgba(255, 250, 240, 0) 70%);
+}
+
+/* 夜间：纹样再清楚一点 */
+html[data-skin="vintage"][data-theme="night"] .vintage-bg .vg-motif { opacity: .58; }
