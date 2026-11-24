@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="night">
+<html lang="zh-CN" data-theme="night" data-skin="vintage">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -20,9 +20,18 @@
 <link rel="stylesheet" href="css/lotus.css?v=20261116" />
 <link rel="stylesheet" href="css/bloom.css?v=20261124" />
 <link rel="stylesheet" href="css/viewer-tabs.css?v=20261124" />
+<link rel="stylesheet" href="css/vintage.css?v=20261125" />
+<link rel="preload" as="image" href="assets/vintage/bg/night.webp" />
 <link rel="preload" as="image" href="assets/censer/bloom-open.webp" />
 </head>
 <body data-theme="night" data-view="today">
+
+<!-- 手绘复古底纹（暗纹 + 鼠标局部提色） -->
+<div class="vintage-bg" aria-hidden="true">
+  <div class="vg-base"></div>
+  <div class="vg-ink"></div>
+  <div class="vg-veil"></div>
+</div>
 
 <!-- 材质层 -->
 <div class="grain" aria-hidden="true"></div>
@@ -49,14 +58,27 @@
   </nav>
 
   <div class="top-actions">
-    <button id="btnTheme" class="chip chip-theme" type="button" title="白天 / 夜间（快捷键 L）">
-      <i class="chip-dot" aria-hidden="true"></i><span id="themeLabel">夜</span>
+    <button id="btnTheme" class="tool tool-theme" type="button" title="白天 / 夜间（快捷键 L）">
+      <img id="themeIcon" src="assets/vintage/icons/night.png" alt="" aria-hidden="true" />
+      <span id="themeLabel">夜</span>
     </button>
-    <button id="btnPet" class="chip" type="button" aria-pressed="false" title="桌宠（快捷键 P）">桌宠</button>
-    <button id="btnSound" class="chip" type="button" aria-pressed="false" title="声音（快捷键 M）"><i class="chip-dot" aria-hidden="true"></i>声</button>
-    <button id="btnRef" class="chip" type="button" aria-expanded="false" aria-controls="refSheet" title="香事（快捷键 K）">香事</button>
-    <button id="btnViewer" class="chip chip-360" type="button" aria-expanded="false" title="样机 360°（快捷键 V）">360°</button>
-        <button id="btnHelp" class="chip" type="button" title="使用帮助（快捷键 H）">帮助</button>
+    <button id="btnPet" class="tool tool-pet" type="button" aria-pressed="false" title="桌宠（快捷键 P）">
+      <img id="petIcon" src="assets/vintage/icons/pet-night.png" alt="" aria-hidden="true" />
+      <span>桌宠</span>
+    </button>
+    <div class="more-wrap">
+      <button id="btnMore" class="tool tool-more" type="button" aria-expanded="false" aria-controls="moreMenu" title="更多">
+        <img src="assets/vintage/icons/more.png" alt="" aria-hidden="true" />
+        <span>更多</span>
+        <img class="tool-caret" src="assets/vintage/arrow/arrow-down-night.png" alt="" aria-hidden="true" />
+      </button>
+      <div class="more-menu" id="moreMenu" role="menu" aria-hidden="true">
+        <button id="btnSound" type="button" role="menuitem" aria-pressed="false" title="声音（快捷键 M）">声音</button>
+        <button id="btnRef" type="button" role="menuitem" aria-expanded="false" aria-controls="refSheet" title="香事（快捷键 K）">香事</button>
+        <button id="btnViewer" type="button" role="menuitem" aria-expanded="false" title="样机 360°（快捷键 V）">360°</button>
+        <button id="btnHelp" type="button" role="menuitem" title="使用帮助（快捷键 H）">帮助</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -65,25 +87,20 @@
   <section id="view-today" class="view is-on" role="tabpanel" aria-label="今日状态">
     <div class="stage">
 
-      <!-- 左：设备图标（只有图形 + 状态点） -->
+      <!-- 左：设备卡 -->
       <aside class="rail rail-left" aria-label="设备">
         <button class="rail-toggle" type="button" data-rail="left" aria-label="收起设备" aria-expanded="true">‹</button>
-        <button class="rail-btn" type="button" data-panel="watch" aria-label="腕表" title="腕表">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <rect x="10" y="9" width="12" height="14" rx="4"/>
-            <path d="M13 9V5h6v4M13 23v4h6v-4"/>
-            <circle cx="16" cy="16" r="1.3" class="fill"/>
-          </svg>
-          <span class="rail-dot" id="watchDot"></span>
-          <span class="rail-val" id="watchPill">82%</span>
+        <button class="rail-card rail-btn" type="button" data-panel="watch" aria-label="腕表，已连接，电量 82%" title="腕表">
+          <img class="rail-art" src="assets/vintage/cards/watch.webp" alt="" aria-hidden="true" draggable="false" />
+          <span class="rail-title">腕表</span>
+          <span class="rail-status"><i class="rail-dot" id="watchDot"></i>已连接</span>
+          <span class="rail-meta">电量 <b id="watchPill">82%</b></span>
         </button>
-        <button class="rail-btn" type="button" data-panel="diff" aria-label="香氛仪" title="香氛仪">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M12 11h8v2.4c2.8 2 4 4.6 4 7.6 0 4.2-3.5 6.6-8 6.6s-8-2.4-8-6.6c0-3 1.2-5.6 4-7.6z"/>
-            <path d="M14 7c0-1.7 1-3 2-3s2 1.3 2 3"/>
-          </svg>
-          <span class="rail-dot" id="diffDot"></span>
-          <span class="rail-val" id="diffPill">50%</span>
+        <button class="rail-card rail-btn" type="button" data-panel="diff" aria-label="香氛仪，已连接，余量 50%" title="香氛仪">
+          <img class="rail-art" src="assets/vintage/cards/censer.webp" alt="" aria-hidden="true" draggable="false" />
+          <span class="rail-title">香氛仪</span>
+          <span class="rail-status"><i class="rail-dot" id="diffDot"></i>已连接</span>
+          <span class="rail-meta">余量 <b id="diffPill">50%</b></span>
         </button>
       </aside>
 
@@ -92,11 +109,11 @@
         <div class="censer-wrap" id="censer" role="button" tabindex="0"
              aria-label="香器。按住 1.8 秒点香" aria-pressed="false">
           <div class="censer-glow" id="censerGlow" aria-hidden="true"></div>
-                    <!-- 长按进度光圈（在炉子后面，像一圈光） -->
-          <svg class="press-ring" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-            <circle class="press-track" cx="200" cy="205" r="176"/>
-            <circle class="press-fill" id="pressFill" cx="200" cy="205" r="176"/>
-          </svg>
+          <!-- 长按分段烫金：花瓣 → 底缘细线 → 炉盖金线 → 炉盖花瓣 -->
+          <div class="glow-layer glow-base" aria-hidden="true"></div>
+          <div class="glow-layer glow-lid" aria-hidden="true"></div>
+          <div class="glow-layer glow-petals" aria-hidden="true"></div>
+          <div class="glow-layer glow-flash" id="censerFlash" aria-hidden="true"></div>
           <div class="censer-ground-shadow" aria-hidden="true"></div>
           <img class="censer-art censer-art-day" src="assets/censer/product.webp"
                width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
@@ -107,26 +124,30 @@
                width="1254" height="1254" alt="" aria-hidden="true" draggable="false" />
           <span class="censer-smoke-origin" id="censerSmokeOrigin" aria-hidden="true"></span>
 
-          <div class="censer-hint" id="censerHint">长按 · 点香</div>
         </div>
 
         <p class="verse" aria-hidden="true">一炷烟起　万虑皆息</p>
 
         <p class="state-line" id="stateLine">此刻 · 香冷</p>
+        <div class="censer-hint" id="censerHint">长按点香</div>
         <p class="tcm-line" id="tcmLine"><span class="tcm-tag" id="tcmTag">平和</span><span class="tcm-note" id="tcmNote">气血调匀</span><span class="tcm-conf" id="tcmConf">中等置信</span></p>
         <button class="link-btn" id="btnDetail" type="button">看见身体信号 →</button>
       </div>
 
-      <!-- 右：数据徽记（只露一个数） -->
+      <!-- 右：数据卡 -->
       <aside class="rail rail-right" aria-label="数据">
         <button class="rail-toggle" type="button" data-rail="right" aria-label="收起数据" aria-expanded="true">›</button>
-        <button class="rail-btn" type="button" data-panel="body" aria-label="身体数据" title="身体数据">
-          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 17h5.5l3.2-7.5 4.2 15 3.1-7.5H29"/></svg>
-          <span class="rail-val" id="hrPill">68</span>
+        <button class="rail-card rail-btn" type="button" data-panel="body" aria-label="身体数据，心率 68 次每分" title="身体数据">
+          <img class="rail-art" src="assets/vintage/cards/pulse.webp" alt="" aria-hidden="true" draggable="false" />
+          <span class="rail-title">身体数据</span>
+          <span class="rail-meta">心率</span>
+          <span class="rail-big"><b id="hrPill">68</b><small>次/分</small></span>
         </button>
-        <button class="rail-btn" type="button" data-panel="scent" aria-label="当前香方" title="当前香方">
-          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5.5c4.4 5.4 6.6 8.8 6.6 12a6.6 6.6 0 0 1-13.2 0c0-3.2 2.2-6.6 6.6-12z"/></svg>
-          <span class="rail-val" id="scentPill">沉香</span>
+        <button class="rail-card rail-btn" type="button" data-panel="scent" aria-label="当前香方，沉香，待用" title="当前香方">
+          <img class="rail-art" src="assets/vintage/cards/scent-note.webp" alt="" aria-hidden="true" draggable="false" />
+          <span class="rail-title">当前香方</span>
+          <span class="rail-big"><b id="scentPill">沉香</b></span>
+          <span class="rail-meta">待用</span>
         </button>
       </aside>
     </div>
@@ -217,12 +238,32 @@
         <p class="sec-sub">轻音乐音源准备中</p>
       </aside>
 
-      <!-- 中：香方配比（视觉主体） -->
+      <!-- 中：辛夷主花 + 半圆配比 + 浮瓣 -->
       <div class="col adj-center">
-        <h3 class="sec-title center">当前香方与配比</h3>
-        <div class="scent-viz" id="scentViz"><!-- ScentViz 渲染 --></div>
-        <div class="scent-legend" id="scentLegend"></div>
-        <p class="viz-note" id="vizNote">配比随场景与实时状态缓慢变化</p>
+        <h3 class="sec-title center">香方配比</h3>
+        <div class="tune-main" id="tuneMain">
+          <canvas class="petal-layer" id="petalLayer" aria-hidden="true"></canvas>
+          <div class="flower-stage" id="tuneFlower">
+            <img id="tuneFlowerImg" src="assets/vintage/flower/f01.webp" alt="辛夷花" draggable="false" />
+          </div>
+          <div class="mix-arc-wrap">
+            <svg id="mixArc" class="mix-arc" viewBox="0 0 520 132" aria-hidden="true" focusable="false">
+              <path class="arc-track" d="M18 40 Q 260 150 502 40" />
+              <path class="arc-seg seg-0" id="arcSeg0" d="" />
+              <path class="arc-seg seg-1" id="arcSeg1" d="" />
+              <path class="arc-seg seg-2" id="arcSeg2" d="" />
+              <g class="arc-handle" id="arcH0" tabindex="0" role="slider" aria-label="沉香与竹青交界" aria-valuemin="0" aria-valuemax="100"><circle r="9" /></g>
+              <g class="arc-handle" id="arcH1" tabindex="0" role="slider" aria-label="竹青与龙脑交界" aria-valuemin="0" aria-valuemax="100"><circle r="9" /></g>
+            </svg>
+            <div class="mix-legend" id="mixLegend">
+              <span class="mix-item" data-k="chenxiang">沉香 <b>40%</b></span>
+              <span class="mix-item" data-k="zhuqing">竹青 <b>40%</b></span>
+              <span class="mix-item" data-k="longnao">龙脑 <b>20%</b></span>
+            </div>
+          </div>
+          <div class="scent-viz" id="scentViz" hidden></div>
+          <div class="scent-legend" id="scentLegend" hidden></div>
+        </div>
       </div>
 
       <!-- 右：控制权 + 进度 -->
@@ -254,14 +295,25 @@
   <section id="view-records" class="view" role="tabpanel" aria-label="记录">
     <p class="rec-summary" id="dailySummary">今日 · 已陪你 42 分钟 · 点香 0 次</p>
     <div class="rec-grid">
-      <div class="col">
-        <h3 class="sec-title">本月</h3>
+      <div class="rec-card rec-cal">
+        <div class="rec-head">
+          <h3 class="rec-title">本月</h3>
+          <span class="rec-meta" id="recMonthLabel">2026 年 11 月</span>
+        </div>
         <div class="calendar" id="calendar"></div>
+        <p class="rec-foot"><i class="rec-dot"></i>有记录</p>
       </div>
-      <div class="col">
-        <h3 class="sec-title">心率趋势 · 今日</h3>
-        <svg id="trendBig" class="trend-big" viewBox="0 0 620 180" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <h3 class="sec-title" style="margin-top:26px">香事录</h3>
+      <div class="rec-card rec-trend">
+        <div class="rec-head">
+          <h3 class="rec-title">心率趋势 · 今日</h3>
+          <span class="rec-meta">次/分</span>
+        </div>
+        <div class="trend-wrap">
+          <svg id="trendBig" class="trend-big" viewBox="0 0 620 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </div>
+        <div class="rec-head rec-head-sub">
+          <h3 class="rec-title">香事录</h3>
+        </div>
         <ol class="log" id="eventLog"></ol>
       </div>
     </div>
@@ -474,5 +526,6 @@
 <script src="js/music.js"></script>
 <script src="js/app.js"></script>
 <script src="js/viewer.js"></script>
+<script src="js/vintage.js?v=20261125"></script>
 </body>
 </html>
