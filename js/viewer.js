@@ -1,9 +1,10 @@
 /* ============================================================
    闻息 · viewer.js
-   样机 360° 查看器：72 帧（每 5°）透明渲染，canvas 绘制。
+   样机 360° 查看器：144 帧（每 2.5°）透明渲染，canvas 绘制。
      · 入口：顶栏「360°」胶囊 / 快捷键 V
+     · 两个样机：香薰仪 / 手环，顶部胶囊切换（按需加载，首次切换才下载手环帧）
      · 拖动旋转、滚轮缩放、←/→ 逐帧、Esc 关闭
-     · 全部帧启动时预解码，拖动不掉帧
+     · 打开时预解码当前样机的全部帧，拖动不掉帧
    ============================================================ */
 (function () {
   'use strict';
@@ -11,18 +12,26 @@
   var N = 144;
   var STEP = 360 / N;
 
-  function src(i) {
+  var MODELS = {
+    censer: { name: '香薰仪', dir: 'assets/censer/viewer/' },
+    band:   { name: '手环',   dir: 'assets/band/viewer/' }
+  };
+  var ORDER = ['censer', 'band'];
+
+  function frameSrc(model, i) {
     var s = String(i);
     while (s.length < 3) s = '0' + s;
-    return 'assets/censer/viewer/f' + s + '.webp';
+    return MODELS[model].dir + 'f' + s + '.webp';
   }
 
   var root = null;
   var canvas = null;
   var ctx = null;
+
+  var model = 'censer';
+  var sets = {};          // model -> { imgs, decoded, started }
   var imgs = new Array(N);
   var decoded = 0;
-  var started = false;
 
   var angle = 0;
   var frame = 0;
@@ -43,6 +52,10 @@
       '  <span class="viewer-title">闻息 · 样机 360°</span>',
       '  <button class="viewer-close" type="button">合上</button>',
       '</div>',
+      '<div class="viewer-tabs" role="tablist">',
+      '  <button class="viewer-tab is-on" type="button" role="tab" data-model="censer">香薰仪</button>',
+      '  <button class="viewer-tab" type="button" role="tab" data-model="band">手环</button>',
+      '</div>',
       '<div class="viewer-stage"><canvas class="viewer-canvas"></canvas></div>',
       '<p class="viewer-hint">拖动旋转 · 滚轮缩放 · ← → 逐帧 · Esc 关闭</p>',
       '<p class="viewer-load" aria-live="polite"></p>'
@@ -56,6 +69,14 @@
     root.addEventListener('click', function (e) {
       if (e.target === root) close();
     });
+
+    var tabs = root.querySelectorAll('.viewer-tab');
+    for (var t = 0; t < tabs.length; t++) {
+      tabs[t].addEventListener('click', function (e) {
+        e.stopPropagation();
+        switchModel(this.getAttribute('data-model'));
+      });
+    }
 
     canvas.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -91,31 +112,66 @@
     window.addEventListener('resize', function () { if (open) requestDraw(); });
   }
 
-  /* ---------------- 载入帧 ---------------- */
-  function load() {
-    if (started) return;
-    started = true;
+  /* ---------------- 载入帧（按样机缓存） ---------------- */
+  function ensureSet(m) {
+    if (sets[m]) return sets[m];
+    var set = { imgs: new Array(N), decoded: 0, started: true };
+    sets[m] = set;
     for (var i = 0; i < N; i++) {
       (function (idx) {
         var im = new Image();
-        im.src = src(idx);
-        imgs[idx] = im;
+        im.src = frameSrc(m, idx);
+        set.imgs[idx] = im;
         var done = function () {
-          decoded++;
-          if (idx === 0) requestDraw();
-          updateLoad();
+          set.decoded++;
+          if (m === model) {
+            if (idx === 0) requestDraw();
+            updateLoad();
+          }
         };
         if (im.decode) im.decode().then(done, done);
         else { im.onload = done; im.onerror = done; }
       })(i);
     }
+    return set;
+  }
+
+  function load() {
+    var set = ensureSet(model);
+    imgs = set.imgs;
+    decoded = set.decoded;
+    updateLoad();
+  }
+
+  function switchModel(m) {
+    if (!m || !MODELS[m] || m === model) return;
+    model = m;
+    var set = ensureSet(m);
+    imgs = set.imgs;
+    decoded = set.decoded;
+    if (root) {
+      var tabs = root.querySelectorAll('.viewer-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('is-on', tabs[i].getAttribute('data-model') === m);
+      }
+      root.setAttribute('data-model', m);
+      var loadEl = root.querySelector('.viewer-load');
+      if (loadEl) loadEl.textContent = '';
+    }
+    updateLoad();
+    requestDraw();
+  }
+
+  function decodedOf(m) {
+    return sets[m] ? sets[m].decoded : 0;
   }
 
   function updateLoad() {
     var el = root && root.querySelector('.viewer-load');
     if (!el) return;
-    if (decoded >= N) { el.textContent = ''; return; }
-    el.textContent = '载入中 ' + decoded + ' / ' + N;
+    var d = decodedOf(model);
+    if (d >= N) { el.textContent = ''; return; }
+    el.textContent = '载入中（' + MODELS[model].name + '）' + d + ' / ' + N;
   }
 
   /* ---------------- 绘制 ---------------- */
@@ -217,6 +273,12 @@
     toggle: toggle,
     frame: function (i) { setAngle(i * STEP); },
     count: N,
-    ready: function () { return decoded; }
+    ready: function () { return decodedOf(model); },
+    model: function (m) {
+      if (m) switchModel(m);
+      return model;
+    },
+    models: function () { return ORDER.slice(); },
+    readyOf: function (m) { return decodedOf(m); }
   };
 })();

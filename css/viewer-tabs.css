@@ -1,0 +1,54 @@
+/* 样机 360° 查看器 · 样机切换胶囊（香薰仪 / 手环） */
+
+.viewer-tabs {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+
+.viewer-tab {
+  appearance: none;
+  border: 1px solid rgba(238, 231, 216, .38);
+  background: rgba(28, 24, 20, .18);
+  color: rgba(246, 238, 221, .82);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: .08em;
+  padding: 6px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .35s ease, color .35s ease, border-color .35s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viewer-tab:hover {
+  border-color: rgba(246, 238, 221, .55);
+  color: #f6eedd;
+}
+
+.viewer-tab.is-on {
+  background: rgba(250, 245, 233, .94);
+  border-color: rgba(250, 245, 233, .94);
+  color: #342c24;
+  font-weight: 600;
+}
+
+.viewer-tab:focus-visible {
+  outline: 2px solid rgba(246, 238, 221, .7);
+  outline-offset: 2px;
+}
+
+/* 手环是竖立的环，给舞台上下留出更多余地，别被裁掉 */
+.viewer[data-model="band"] .viewer-canvas {
+  transform: scale(.96);
+  transform-origin: center;
+}
+
+@media (max-width: 720px) {
+  .viewer-tabs { top: 60px; }
+  .viewer-tab { padding: 5px 14px; font-size: 12px; }
+}
