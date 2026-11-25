@@ -1773,3 +1773,108 @@ html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper {
   opacity: .44;
   filter: sepia(.35) brightness(1.06);
 }
+
+
+/* ============================================================
+   第六轮：白天水洗更粗粝、纹样收敛、开花动效回到“张开”
+   ============================================================ */
+
+/* 白天：把水洗做成真正的湿画布（多一层糙面 + 更强的染色） */
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-wash {
+  opacity: .85;
+  mix-blend-mode: multiply;
+  filter: sepia(.62) saturate(1.9) brightness(1.30) contrast(1.22);
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper {
+  opacity: .7;
+  mix-blend-mode: multiply;
+  filter: sepia(.5) brightness(1.02) contrast(1.25);
+  background-size: 300px 300px;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-base {
+  filter: brightness(1.03) saturate(.96);
+}
+
+/* 纹样别太乱：只留三处，压到角落 */
+html[data-skin="vintage"] .vintage-bg .m3,
+html[data-skin="vintage"] .vintage-bg .m4,
+html[data-skin="vintage"] .vintage-bg .m6 { display: none; }
+html[data-skin="vintage"] .vintage-bg .m1 { width: 26vw; height: 26vw; left: -6%; bottom: -8%; opacity: .34; }
+html[data-skin="vintage"] .vintage-bg .m2 { width: 24vw; height: 24vw; right: -7%; top: -9%; opacity: .34; }
+html[data-skin="vintage"] .vintage-bg .m5 { width: 17vw; height: 17vw; right: 1%; bottom: -2%; opacity: .26; }
+
+/* 香炉：白天不要蓝影，改用柔和暖影 */
+html[data-skin="vintage"][data-theme="day"] .censer-wrap .censer-art {
+  filter: drop-shadow(0 12px 18px rgba(120, 98, 70, .18));
+}
+
+/* 开花动效：花瓣整片张开 14%，带一点提亮和暖光 */
+html[data-skin="vintage"] .censer-art.censer-bloom {
+  --bloom-cx: 50%;
+  --bloom-cy: 40%;
+  transform-origin: var(--bloom-cx) var(--bloom-cy);
+  transform: scale(.93);
+  opacity: 0;
+  filter: saturate(1.12) brightness(1.06) drop-shadow(0 0 18px rgba(255, 190, 190, .45));
+  transition: opacity 1.9s cubic-bezier(.34, .1, .28, 1),
+              transform 2.1s cubic-bezier(.22, .68, .3, 1);
+}
+html[data-skin="vintage"] body.is-igniting:not(.is-lit) .censer-art.censer-bloom {
+  opacity: .55;
+  transform: scale(.99);
+  transition: opacity .7s ease, transform 1.3s cubic-bezier(.3, .6, .4, 1);
+}
+html[data-skin="vintage"] body.is-lit .censer-art.censer-bloom {
+  opacity: 1;
+  transform: scale(1.14);
+  transition: opacity 1.4s ease, transform 1.7s cubic-bezier(.2, .72, .3, 1);
+}
+
+
+/* 白天最后一道提亮：把水洗过的纸拉回暖宣纸的明度 */
+html[data-skin="vintage"][data-theme="day"] .vintage-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 44%, rgba(255, 249, 236, .40) 0%, rgba(255, 249, 236, 0) 62%),
+    linear-gradient(180deg, rgba(255, 250, 238, .26), rgba(255, 248, 235, .12));
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+/* 白天的落地影轻一点，别压出脏灰 */
+html[data-skin="vintage"][data-theme="day"] .censer-ground-shadow {
+  background: radial-gradient(ellipse at center, rgba(126, 104, 74, .20) 0%, transparent 70%);
+  filter: blur(10px);
+}
+html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
+  background: radial-gradient(ellipse at center, rgba(16, 24, 34, .38) 0%, transparent 70%);
+}
+
+
+/* 白天：底图本身已是水彩纸，额外涂层降到“只加质感不加暗” */
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-wash {
+  opacity: .28;
+  mix-blend-mode: multiply;
+  filter: sepia(.4) saturate(1.2) brightness(1.5);
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper {
+  opacity: .34;
+  mix-blend-mode: overlay;
+  filter: none;
+  background-size: 360px 360px;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-base {
+  filter: none;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg::before {
+  background:
+    radial-gradient(130% 95% at 50% 44%, rgba(255, 250, 238, .22) 0%, rgba(255, 250, 238, 0) 64%);
+  mix-blend-mode: screen;
+}
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-motif {
+  opacity: .42;
+  mix-blend-mode: multiply;
+  filter: sepia(.25) contrast(1.05);
+}

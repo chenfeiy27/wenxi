@@ -92,6 +92,12 @@
 
   function syncTheme() {
     var night = html.getAttribute('data-theme') === 'night';
+    var dayArt = doc.querySelector('.censer-art-day');
+    var bloomArt = doc.querySelector('.censer-bloom');
+    if (dayArt) dayArt.src = 'assets/censer/product-day.webp';
+    if (bloomArt) {
+      bloomArt.src = night ? 'assets/censer/bloom-open.webp' : 'assets/censer/bloom-open-day.webp';
+    }
     if (themeIcon) {
       themeIcon.src = 'assets/vintage/icons/' + (night ? 'night' : 'day') + '.png';
       themeIcon.alt = '';
