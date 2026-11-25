@@ -92,12 +92,8 @@
 
   function syncTheme() {
     var night = html.getAttribute('data-theme') === 'night';
-    var dayArt = doc.querySelector('.censer-art-day');
-    var bloomArt = doc.querySelector('.censer-bloom');
-    if (dayArt) dayArt.src = 'assets/censer/product-day.webp';
-    if (bloomArt) {
-      bloomArt.src = night ? 'assets/censer/bloom-open.webp' : 'assets/censer/bloom-open-day.webp';
-    }
+    // 日夜共用同一张干净香炉；开花层用烘焙好的「花瓣张开」图，交叉淡入
+
     if (themeIcon) {
       themeIcon.src = 'assets/vintage/icons/' + (night ? 'night' : 'day') + '.png';
       themeIcon.alt = '';
