@@ -1952,3 +1952,45 @@ html[data-skin="vintage"] body:not(.is-lit):not(.is-igniting) .censer-art.censer
   opacity: 0;
   transition: opacity 1.0s ease .1s;
 }
+
+
+/* 落地阴影：两层（接触影 + 扩散影），把炉子从背景里托起来 */
+html[data-skin="vintage"] .censer-wrap .censer-ground-shadow {
+  left: 50%;
+  top: 75.6%;
+  width: 44%;
+  height: 5.2%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  filter: blur(7px);
+  background: radial-gradient(ellipse at center, rgba(88, 72, 54, .42) 0%, rgba(88, 72, 54, .22) 42%, rgba(88, 72, 54, 0) 74%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+html[data-skin="vintage"] .censer-wrap::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 74.2%;
+  width: 76%;
+  height: 9%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(84, 68, 50, .20) 0%, rgba(84, 68, 50, .07) 46%, rgba(84, 68, 50, 0) 78%);
+  filter: blur(13px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+html[data-skin="vintage"][data-theme="night"] .censer-wrap .censer-ground-shadow {
+  background: radial-gradient(ellipse at center, rgba(8, 14, 22, .55) 0%, rgba(8, 14, 22, .28) 44%, rgba(8, 14, 22, 0) 76%);
+}
+html[data-skin="vintage"][data-theme="night"] .censer-wrap::after {
+  background: radial-gradient(ellipse at center, rgba(8, 14, 22, .30) 0%, rgba(8, 14, 22, .10) 48%, rgba(8, 14, 22, 0) 80%);
+}
+
+
+/* 阴影已经烘进产品图，CSS 这层只做一点点环境压暗 */
+html[data-skin="vintage"] .censer-wrap .censer-ground-shadow { opacity: .45; }
+html[data-skin="vintage"] .censer-wrap::before { display: none !important; }
