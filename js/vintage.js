@@ -93,7 +93,7 @@
   function syncTheme() {
     var night = html.getAttribute('data-theme') === 'night';
     var bloomArt = doc.querySelector('.censer-bloom');
-    if (bloomArt) bloomArt.src = night ? 'assets/censer/bloom-open.webp' : 'assets/censer/bloom-open-day.webp';
+    if (bloomArt) bloomArt.src = night ? 'assets/censer/bloom-open.webp?v=20261125h' : 'assets/censer/bloom-open-day.webp?v=20261125h';
     // 日夜共用同一张干净香炉；开花层用烘焙好的「花瓣张开」图，交叉淡入
 
     if (themeIcon) {
