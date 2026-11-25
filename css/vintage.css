@@ -21,7 +21,7 @@ html[data-skin="vintage"] {
   --nav-on: #765487;
   --rule: rgba(130, 108, 79, .34);
   --card-glow: rgba(248, 242, 232, .62);
-  --bg-img: url("../assets/vintage/bg/day.webp");
+  --bg-img: url("../assets/vintage/bg/day-botanical.jpg");
   --bg-veil: linear-gradient(180deg, rgba(240, 229, 209, .28), rgba(240, 229, 209, .10));
   --card-frame: url("../assets/vintage/frame/card-day.png");
   --menu-frame: url("../assets/vintage/frame/menu-day.png");
@@ -513,6 +513,12 @@ html[data-skin="vintage"][data-theme="day"] .censer-ground-shadow {
   background: radial-gradient(ellipse at center, rgba(120, 100, 76, .30) 0%, transparent 70%);
 }
 
+/* 水彩香氛仪的花心位于中心偏左。 */
+html[data-skin="vintage"] .censer-wrap .censer-smoke-origin {
+  left: 43.3%;
+  top: 36.5%;
+}
+
 /* 长按分段烫金：四层光晕 */
 html[data-skin="vintage"] .censer-wrap .glow-layer {
   position: absolute;
@@ -525,21 +531,21 @@ html[data-skin="vintage"] .censer-wrap .glow-layer {
 }
 
 html[data-skin="vintage"] .glow-petals {
-  background: radial-gradient(ellipse 42% 26% at 50% 33%, rgba(255, 214, 170, .85) 0%, rgba(255, 200, 150, 0) 70%);
-  -webkit-mask-image: radial-gradient(ellipse 46% 30% at 50% 33%, #000 30%, transparent 78%);
-  mask-image: radial-gradient(ellipse 46% 30% at 50% 33%, #000 30%, transparent 78%);
+  background: radial-gradient(ellipse 25% 22% at 43.3% 42%, rgba(255, 214, 170, .85) 0%, rgba(255, 200, 150, 0) 70%);
+  -webkit-mask-image: radial-gradient(ellipse 27% 24% at 43.3% 42%, #000 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 27% 24% at 43.3% 42%, #000 30%, transparent 78%);
 }
 
 html[data-skin="vintage"] .glow-base {
-  background: radial-gradient(ellipse 52% 16% at 50% 60%, rgba(255, 226, 186, .8) 0%, rgba(255, 210, 160, 0) 72%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 48%, #000 62%, transparent 78%);
-  mask-image: linear-gradient(180deg, transparent 48%, #000 62%, transparent 78%);
+  background: radial-gradient(ellipse 41% 9% at 50% 74%, rgba(255, 226, 186, .8) 0%, rgba(255, 210, 160, 0) 72%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 66%, #000 74%, transparent 78%);
+  mask-image: linear-gradient(180deg, transparent 66%, #000 74%, transparent 78%);
 }
 
 html[data-skin="vintage"] .glow-lid {
-  background: radial-gradient(ellipse 44% 12% at 50% 47%, rgba(255, 236, 196, .9) 0%, rgba(255, 210, 160, 0) 74%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 38%, #000 46%, transparent 60%);
-  mask-image: linear-gradient(180deg, transparent 38%, #000 46%, transparent 60%);
+  background: radial-gradient(ellipse 42% 9% at 50% 69%, rgba(255, 236, 196, .9) 0%, rgba(255, 210, 160, 0) 74%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 59%, #000 69%, transparent 74%);
+  mask-image: linear-gradient(180deg, transparent 59%, #000 69%, transparent 74%);
 }
 
 html[data-skin="vintage"] .glow-flash {
@@ -1853,32 +1859,24 @@ html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
 }
 
 
-/* 白天：底图本身已是水彩纸，额外涂层降到“只加质感不加暗” */
-html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-wash {
-  opacity: .28;
-  mix-blend-mode: multiply;
-  filter: sepia(.4) saturate(1.2) brightness(1.5);
-}
-html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper {
-  opacity: .34;
-  mix-blend-mode: overlay;
-  filter: none;
-  background-size: 360px 360px;
-}
-html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-base {
-  filter: none;
-}
-html[data-skin="vintage"][data-theme="day"] .vintage-bg::before {
-  background:
-    radial-gradient(130% 95% at 50% 44%, rgba(255, 250, 238, .22) 0%, rgba(255, 250, 238, 0) 64%);
-  mix-blend-mode: screen;
-}
-html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-motif {
-  opacity: .42;
-  mix-blend-mode: multiply;
-  filter: sepia(.25) contrast(1.05);
-}
+/* 白天直接使用交接底图，植物暗纹和纸面色调由底图提供。 */
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-base,
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-ink { inset: 0; }
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-base { opacity: 1; filter: none; }
 
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-motif,
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-wash,
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-paper,
+html[data-skin="vintage"][data-theme="day"] .vintage-bg .vg-veil,
+html[data-skin="vintage"][data-theme="day"] .grain,
+html[data-skin="vintage"][data-theme="day"] .washes { display: none; }
+html[data-skin="vintage"][data-theme="day"] .vintage-bg::before,
+html[data-skin="vintage"][data-theme="day"] .vintage-bg::after { content: none; }
+
+html[data-skin="vintage"][data-theme="day"] .topbar {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 
 /* ============================================================
    第七轮：开花改为「已张开的花瓣图」交叉淡入
