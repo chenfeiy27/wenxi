@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var TOTAL = 60;            // 秒
+  var TOTAL = 90;            // 秒
   var root = document.documentElement;
   var running = false;
   var timers = [];
@@ -84,9 +84,9 @@
     if ($('#adStyle')) return;
     var css = ''
       + '#adBar{position:fixed;left:0;top:0;height:2px;width:0;z-index:99999;background:linear-gradient(90deg,#A66CC2,#AD9162);opacity:.85;transition:width .2s linear;pointer-events:none}'
-      + '#adCap{position:fixed;left:50%;bottom:13.5vh;transform:translateX(-50%);z-index:99999;pointer-events:none;'
-      + 'font-family:"Songti SC",SimSun,serif;font-size:17px;letter-spacing:.14em;color:#FFF8EC;'
-      + 'padding:9px 22px;border-radius:22px;background:rgba(38,32,28,.46);backdrop-filter:blur(6px);'
+      + '#adCap{position:fixed;left:50%;bottom:2.2vh;transform:translateX(-50%);z-index:99999;pointer-events:none;'
+      + 'font-family:"Songti SC",SimSun,serif;font-size:15px;letter-spacing:.12em;color:#FFF8EC;'
+      + 'padding:6px 18px;border-radius:18px;background:rgba(38,32,28,.46);backdrop-filter:blur(6px);'
       + 'white-space:nowrap;opacity:0;transition:opacity .45s ease}'
       + '#adCap.on{opacity:1}'
       + '#adStart{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;'
@@ -146,19 +146,23 @@
   /* ---------------- 时间轴 ---------------- */
   function steps() {
     return [
+      /* ---------- 入场 + 今日 ---------- */
       [0.0, '轻 触 入 室', function () {
         if (api().theme) api().theme('day');
         if (el('#gate')) click('#gate');
       }],
-      [2.6, '今日 · 腕表与香氛仪状态', function () { api().setView && api().setView('today'); }],
-      [5.0, '长按香炉 1.8 秒 · 点香', function () { pressLong('#censer', 2000); }],
-      [7.9, '点燃 · 花瓣张开 · 粉色香雾 · 一声脆响', null],
-      [10.4, '中医状态层 · 心火偏亢（含置信度与依据）', function () { api().previewState && api().previewState('heartFire', 3.2); }],
-      [13.6, '四类复合指纹 · 气血两虚', function () { api().previewState && api().previewState('qiBlood', 2.8); }],
-      [16.4, '点开数据详情 · 心率 / HRV / 趋势 / 判定依据', function () { click('#btnDetail'); }],
-      [19.4, '收起详情', function () { click('#sheetClose'); }],
-      [20.2, '记录 · 本月日历（有点香记录的日子带金点）', function () { api().setView && api().setView('records'); }],
-      [24.0, '记录页 · 心率趋势与香事录', function () {
+      [3.2, '今日 · 腕表与香氛仪的实时状态', function () { api().setView && api().setView('today'); }],
+      [6.6, '长按香炉 1.8 秒开始点香（进度环蓄满）', function () { pressLong('#censer', 2000); }],
+      [9.4, '点燃 · 花瓣张开 · 粉色香雾 · 一声脆响', null],
+      /* ---------- 中医状态层 ---------- */
+      [12.6, '中医状态层 · 心火偏亢（置信度 + 判定依据）', function () { api().previewState && api().previewState('xinhuo', 3.6); }],
+      [16.4, '四类复合指纹 · 气血两虚', function () { api().previewState && api().previewState('qixue', 3.4); }],
+      [20.2, '阴虚火旺 · 夜间心率偏高、HRV 下降', function () { api().previewState && api().previewState('yinxu', 3.4); }],
+      [24.0, '点开数据详情：心率 / HRV / 趋势 / 判定依据', function () { click('#btnDetail'); }],
+      [28.6, '收起详情，回到今日', function () { click('#sheetClose'); }],
+      /* ---------- 记录 ---------- */
+      [29.6, '记录 · 本月日历（有点香记录的日子带金点）', function () { api().setView && api().setView('records'); }],
+      [33.4, '记录 · 心率趋势与香事录', function () {
         var cal = el('.rec-cal');
         if (!cal) return;
         var cells = cal.querySelectorAll('div,span,button');
@@ -166,33 +170,53 @@
           if (cells[i].children.length === 0 && cells[i].textContent.trim() === '12') { cells[i].click(); return; }
         }
       }],
-      [26.6, '调节 · 选场景，君臣佐使自动配比', function () { api().setView && api().setView('adjust'); }],
-      [28.4, '切换场景 · 放松（配比逐帧缓动）', function () { click('.scene[data-scene="relax"]'); }],
-      [31.2, '扩香强度 · 五档滑杆', function () { setRange('#intensity', 4); }],
-      [33.2, '直接拖动圆环，调整三味配比', function () { drag(el('#arcH0'), 46, 0); }],
-      [35.8, '开始运行 · 进度与倒计时', function () { click('#btnStart'); api().run && api().run(true); }],
-      [38.0, '回到今日 · 运行中', function () { api().setView && api().setView('today'); }],
-      [39.6, '桌宠 · 可拖动、可置顶', function () { click('#btnPet'); }],
-      [41.4, '更多 · 360° 样机 / 音效 / 说明', function () { click('#btnPet'); click('#btnMore'); }],
-      [42.4, '声 · 音效与音乐开关', function () { click('#btnSound'); }],
-      [43.6, '音效开启', function () { click('#swSfx'); }],
-      [44.8, '360° 样机查看器 · 144 帧转台', function () { click('#soundClose'); click('#btnViewer'); }],
-      [46.4, '手环样机 · 拖动旋转', function () { if (window.Viewer360) window.Viewer360.model('band'); }],
-      [47.8, '拖动旋转（← → 逐帧）', function () {
-        var n = 0, iv = setInterval(function () { key('ArrowRight'); if (++n > 8) clearInterval(iv); }, 100);
+      /* ---------- 调节 ---------- */
+      [37.0, '调节 · 选中场景，君臣佐使自动配比', function () { api().setView && api().setView('adjust'); }],
+      [40.4, '场景切换 · 放松 → 入睡 → 提神（配比逐帧缓动）', function () {
+        var seq = ['relax', 'sleep', 'lift'];
+        seq.forEach(function (name, k) {
+          setTimeout(function () { click('.scene[data-scene="' + name + '"]'); }, k * 900);
+        });
       }],
-      [50.0, '香炉样机 · 拖动旋转', function () {
+      [44.6, '扩香强度 5 档 · 时长 10 / 20 / 30 分钟', function () { setRange('#intensity', 4); }],
+      [48.2, '声音陪伴 · 静默 / 环境音 / 轻音乐', function () { var sb = document.querySelectorAll('#soundSeg button'); if (sb[1]) sb[1].click(); }],
+      [51.8, '谁来调节 · 完全手动 → 半自动 → 自动 → 完全自动', function () {
+        var b = document.querySelector('.auto-mode[data-auto="auto"]');
+        if (b) b.click();
+      }],
+      [55.2, '直接拖圆环，微调三味配比', function () { drag(el('#arcH0'), 46, 0); }],
+      [58.4, '开始运行 · 进度与倒计时', function () { click('#btnStart'); api().run && api().run(true); }],
+      [61.6, '半自动时会弹建议：接受调整 / 保持当前', function () { api().suggest && api().suggest(true); setTimeout(function () { click('#btnAccept'); }, 1400); }],
+      /* ---------- 今日 / 桌宠 / 更多 ---------- */
+      [65.0, '回到今日 · 运行中；桌宠可拖动、可置顶', function () { api().setView && api().setView('today'); click('#btnPet'); }],
+      [68.6, '更多 · 360° 样机 / 声 / 使用边界', function () { click('#btnPet'); click('#btnMore'); }],
+      [70.6, '声 · 音效与音乐开关 + 音量', function () { click('#btnSound'); }],
+      [73.0, '音效开启', function () { click('#swSfx'); }],
+      /* ---------- 360 ---------- */
+      [74.6, '360° 查看器 · 手环转台（144 帧，每 2.5°）', function () { click('#soundClose'); click('#btnViewer'); if (window.Viewer360) window.Viewer360.model('band'); }],
+      [77.4, '拖动旋转（也可 ← → 逐帧）', function () {
+        var n = 0, iv = setInterval(function () { key('ArrowRight'); if (++n > 7) clearInterval(iv); }, 100);
+      }],
+      [79.6, '香炉转台', function () {
         if (window.Viewer360) window.Viewer360.model('censer');
         var n = 0, iv = setInterval(function () { key('ArrowLeft'); if (++n > 6) clearInterval(iv); }, 100);
       }],
-      [52.2, '熄灭 · 切到夜间主题（墨迹转场）', function () {
+      /* ---------- 非遗 + 小游戏 ---------- */
+      [82.0, '使用边界 · 非遗香篆八步（Ⅷ-224）', function () {
         if (window.Viewer360) window.Viewer360.close();
-        api().extinguish && api().extinguish();
+        click('#btnRef');
+      }],
+      [84.0, '香事 · 解压小游戏（4-7-8 呼吸引导）', function () {
+        var tab = document.querySelector('[data-ref-page="game"]');
+        if (tab) tab.click();
+      }],
+      [86.0, '夜间主题 · 雾蓝纸 · 墨迹转场', function () {
+        click('#refClose');
         api().theme && api().theme('night');
       }],
-      [54.6, '夜间点香 · 花瓣再张开', function () { pressLong('#censer', 2000); }],
-      [57.6, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
-      [60.0, '', function () { finish(); }]
+      [87.4, '夜间点香 · 花瓣再张开', function () { pressLong('#censer', 1600); }],
+      [89.4, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
+      [90.0, '', function () { finish(); }]
     ];
   }
 
@@ -231,7 +255,7 @@
   }
 
   function finish() {
-    caption('');
+    /* 保留最后一屏字幕（结束卡），只收进度条 */
     var b = $('#adBar');
     if (b) b.style.width = '100%';
     timers.push(setTimeout(function () { if (b) b.remove(); }, 600));
