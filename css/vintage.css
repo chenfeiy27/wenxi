@@ -1994,3 +1994,9 @@ html[data-skin="vintage"][data-theme="night"] .censer-wrap::after {
 /* 阴影已经烘进产品图，CSS 这层只做一点点环境压暗 */
 html[data-skin="vintage"] .censer-wrap .censer-ground-shadow { opacity: .45; }
 html[data-skin="vintage"] .censer-wrap::before { display: none !important; }
+
+
+/* 阴影已按主题烘焙进素材，CSS 不再叠加任何阴影层 */
+html[data-skin="vintage"] .censer-wrap .censer-ground-shadow { display: none !important; }
+html[data-skin="vintage"] .censer-wrap::after { content: none !important; }
+html[data-skin="vintage"] .censer-wrap .censer-art { filter: none !important; }
