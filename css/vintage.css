@@ -1927,3 +1927,8 @@ html[data-skin="vintage"] .censer-ground-shadow {
 html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
   background: radial-gradient(ellipse at center, rgba(16, 24, 34, .40) 0%, rgba(16, 24, 34, 0) 72%);
 }
+
+
+/* 开花效果暂时撤掉（等插画版张开图） */
+html[data-skin="vintage"] .censer-art.censer-bloom,
+html[data-skin="vintage"] #censerFlash { display: none !important; }
