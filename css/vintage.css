@@ -1930,5 +1930,25 @@ html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
 
 
 /* 开花效果暂时撤掉（等插画版张开图） */
-html[data-skin="vintage"] .censer-art.censer-bloom,
 html[data-skin="vintage"] #censerFlash { display: none !important; }
+
+
+/* 开花：AI 水彩图 + 位移张开版，0.75 秒交叉淡入 */
+html[data-skin="vintage"] .censer-art.censer-bloom {
+  transform: none !important;
+  filter: none;
+  opacity: 0;
+  transition: opacity .75s cubic-bezier(.4, .05, .3, 1);
+}
+html[data-skin="vintage"] body.is-igniting:not(.is-lit) .censer-art.censer-bloom {
+  opacity: .35;
+  transition: opacity .45s ease;
+}
+html[data-skin="vintage"] body.is-lit .censer-art.censer-bloom {
+  opacity: 1;
+  transition: opacity .75s cubic-bezier(.4, .05, .3, 1);
+}
+html[data-skin="vintage"] body:not(.is-lit):not(.is-igniting) .censer-art.censer-bloom {
+  opacity: 0;
+  transition: opacity 1.0s ease .1s;
+}
