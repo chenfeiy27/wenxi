@@ -162,7 +162,7 @@
   var viewAdjust = $('#view-adjust');
 
   var SEQ = [];
-  var seqState = { raf: 0, start: 0, i0: -1, i1: -1, running: false };
+  var seqState = { raf: 0, start: 0, i0: -1, running: false, front: null, back: null };
   var SEQ_MS = 3600;          // 一轮 3.6 秒（交接说明的建议值）
   var frameA = $('#tuneFlowerA');
   var frameB = $('#tuneFlowerB');
@@ -180,23 +180,50 @@
   /* 12 帧只有 12 个关键姿态，直接换图会一顿一顿。
      这里用两张 img 叠着做连续交叉淡入：任意时刻只差一个混合量，
      观感是连续的，不需要更多素材。 */
+  /* 谁全不透明谁就不许换 src：交叉淡入的两张图角色互换——
+     正在渐入的那张到 100% 后成为新的“底”，另一张才去载入下一帧，
+     这样任意时刻都不会出现空白帧（之前的一闪一闪就是这个原因）。 */
+  function seqInit() {
+    if (!frameA || !frameB) return;
+    frameA.src = seqSrc(0);
+    frameB.src = seqSrc(1);
+    frameA.style.opacity = '1';
+    frameB.style.opacity = '0';
+    seqState.front = frameA;
+    seqState.back = frameB;
+    seqState.i0 = 0;
+    if (frameA.decode) { try { frameA.decode().catch(function () {}); } catch (e) {} }
+    if (frameB.decode) { try { frameB.decode().catch(function () {}); } catch (e) {} }
+  }
+
   function seqTick(now) {
     if (!seqState.running) return;
     if (!seqState.start) seqState.start = now;
     var t = ((now - seqState.start) % SEQ_MS) / SEQ_MS;
     var pos = t * FRAMES;
     var i0 = Math.floor(pos) % FRAMES;
-    var i1 = (i0 + 1) % FRAMES;
     var f = pos - Math.floor(pos);
     if (!frameA || !frameB) return;
-    if (i0 !== seqState.i0) { frameA.src = seqSrc(i0); seqState.i0 = i0; }
-    if (i1 !== seqState.i1) { frameB.src = seqSrc(i1); seqState.i1 = i1; }
-    frameB.style.opacity = f.toFixed(3);
+    if (!seqState.front) seqInit();
+
+    if (i0 !== seqState.i0) {
+      var front = seqState.back;
+      var back = seqState.front;
+      seqState.front = front;
+      seqState.back = back;
+      front.style.opacity = '1';
+      back.style.opacity = '0';
+      seqState.i0 = i0;
+      back.src = seqSrc((i0 + 1) % FRAMES);
+      if (back.decode) { try { back.decode().catch(function () {}); } catch (e) {} }
+    }
+    seqState.back.style.opacity = f.toFixed(3);
     seqState.raf = window.requestAnimationFrame(seqTick);
   }
 
   function startSequence() {
     if (seqState.running || !frameA) return;
+    if (!seqState.front) seqInit();
     seqState.running = true;
     seqState.start = 0;
     seqState.raf = window.requestAnimationFrame(seqTick);

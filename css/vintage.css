@@ -1998,3 +1998,20 @@ html[data-skin="vintage"] .censer-wrap::before { display: none !important; }
 html[data-skin="vintage"] .censer-wrap .censer-ground-shadow { display: none !important; }
 html[data-skin="vintage"] .censer-wrap::after { content: none !important; }
 html[data-skin="vintage"] .censer-wrap .censer-art { filter: none !important; }
+
+
+/* ============================================================
+   修正：呼吸花两张帧各自带 drop-shadow，交叉淡入时阴影会叠加 → 「一明一暗」
+   把投影移到 .flower-stage 容器上，只投一次，与淡入淡出无关
+   ============================================================ */
+html[data-skin="vintage"] .flower-stage {
+  filter: drop-shadow(0 14px 26px rgba(16, 22, 30, .22));
+}
+html[data-skin="vintage"][data-theme="day"] .flower-stage {
+  filter: drop-shadow(0 12px 22px rgba(90, 72, 50, .18));
+}
+html[data-skin="vintage"] .flower-stage img,
+html[data-skin="vintage"][data-theme="day"] .flower-stage img {
+  filter: none !important;
+  transition: none !important;
+}
