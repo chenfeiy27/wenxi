@@ -1914,3 +1914,16 @@ html[data-skin="vintage"] body.is-igniting:not(.is-lit) .censer-art.censer-bloom
 html[data-skin="vintage"] body:not(.is-lit):not(.is-igniting) .censer-art.censer-bloom {
   transition: opacity 1.1s ease .15s;
 }
+
+
+/* 香炉底影：日夜都用中性暖灰，素材里已无阴影 */
+html[data-skin="vintage"] .censer-ground-shadow {
+  top: 86%;
+  width: 52%;
+  height: 5.5%;
+  filter: blur(9px);
+  background: radial-gradient(ellipse at center, rgba(96, 84, 66, .28) 0%, rgba(96, 84, 66, 0) 72%);
+}
+html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
+  background: radial-gradient(ellipse at center, rgba(16, 24, 34, .40) 0%, rgba(16, 24, 34, 0) 72%);
+}
