@@ -22,10 +22,92 @@
   function $(sel) { return document.querySelector(sel); }
   function sleep(ms) { return new Promise(function (r) { timers.push(setTimeout(r, ms)); }); }
   function el(sel) { try { return $(sel); } catch (e) { return null; } }
+  /* ---------- 指示光标：先移动指针，再落点击 ---------- */
+  var CURSOR_SVG = '<svg viewBox="0 0 26 30" width="34" height="39" aria-hidden="true">'
+    + '<path d="M3 2 L3 23 L8.6 17.6 L12.2 26 L16 24.3 L12.4 16 L20 16 Z" '
+    + 'fill="#2B2622" stroke="#FFF8EC" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+
+  function ensurePointer() {
+    var cur = $('#adCursor');
+    if (!cur) {
+      cur = document.createElement('div');
+      cur.id = 'adCursor';
+      cur.innerHTML = CURSOR_SVG;
+      document.body.appendChild(cur);
+    }
+    var ring = $('#adRing');
+    if (!ring) {
+      ring = document.createElement('div');
+      ring.id = 'adRing';
+      document.body.appendChild(ring);
+    }
+    var tap = $('#adTap');
+    if (!tap) {
+      tap = document.createElement('div');
+      tap.id = 'adTap';
+      document.body.appendChild(tap);
+    }
+    return { cur: cur, ring: ring, tap: tap };
+  }
+
+  function point(el, opts) {
+    if (!el || !el.getBoundingClientRect) return;
+    var P = ensurePointer();
+    var r = el.getBoundingClientRect();
+    if (!r.width && !r.height) return;
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    // 指针：箭尖对准目标中心
+    P.cur.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    P.cur.classList.add('on');
+    // 光圈：贴住元素外框
+    var pad = opts && opts.pad != null ? opts.pad : 6;
+    var tooBig = (r.width * r.height) > (window.innerWidth * window.innerHeight * 0.45);
+    if (tooBig) {
+      P.ring.classList.remove('pulse');
+      P.tap.classList.remove('pulse');
+      P.tap.style.left = x + 'px';
+      P.tap.style.top = y + 'px';
+      void P.tap.offsetWidth;
+      P.tap.classList.add('pulse');
+      clearTimeout(point._t);
+      point._t = setTimeout(function () { P.cur.classList.remove('on'); }, 2200);
+      return;
+    }
+    P.ring.style.left = (r.left - pad) + 'px';
+    P.ring.style.top = (r.top - pad) + 'px';
+    P.ring.style.width = (r.width + pad * 2) + 'px';
+    P.ring.style.height = (r.height + pad * 2) + 'px';
+    P.ring.style.borderRadius = (opts && opts.radius) || Math.min(16, (r.height / 2 + 4)) + 'px';
+    P.ring.classList.remove('pulse');
+    void P.ring.offsetWidth;
+    P.ring.classList.add('pulse');
+    // 落点光斑
+    P.tap.style.left = x + 'px';
+    P.tap.style.top = y + 'px';
+    P.tap.classList.remove('pulse');
+    void P.tap.offsetWidth;
+    P.tap.classList.add('pulse');
+    // 一段时间不动就淡出
+    clearTimeout(point._t);
+    point._t = setTimeout(function () { P.cur.classList.remove('on'); }, 2200);
+  }
+
+  function hidePointer() {
+    var c = $('#adCursor'), r = $('#adRing'), t = $('#adTap');
+    if (c) c.classList.remove('on');
+    if (r) r.classList.remove('pulse');
+    if (t) t.classList.remove('pulse');
+  }
+
+  /* 点击：先把指针移过去，220ms 后再真的点 */
   function click(sel) {
-    var e = el(sel);
+    var e = typeof sel === 'string' ? el(sel) : sel;
     if (!e) return false;
-    e.click();
+    point(e);
+    timers.push(setTimeout(function () {
+      try { e.click(); } catch (err) {}
+    }, 220));
     return true;
   }
   function firePointer(type, x, y) {
@@ -43,6 +125,7 @@
   function pressLong(sel, ms) {
     var node = el(sel);
     if (!node) return Promise.resolve();
+    point(node, { pad: 18, radius: '24px' });
     var c = centre(node);
     var wasLit = document.body.classList.contains('is-lit');
     node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
@@ -54,10 +137,12 @@
       if (!wasLit && !document.body.classList.contains('is-lit')) {
         if (api().ignite) api().ignite();
       }
+      point(node, { pad: 18, radius: '24px' });
     });
   }
   function drag(node, dx, dy) {
     if (!node) return;
+    point(node, { pad: 8 });
     var c = centre(node);
     node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
     return sleep(60).then(function () {
@@ -73,6 +158,8 @@
   function setRange(sel, v) {
     var e = el(sel);
     if (!e) return;
+    point(e, { pad: 6 });
+    setTimeout(function () { point(e, { pad: 6 }); }, 260);
     e.value = v;
     e.dispatchEvent(new Event('input', { bubbles: true }));
     e.dispatchEvent(new Event('change', { bubbles: true }));
@@ -83,8 +170,21 @@
   function injectStyle() {
     if ($('#adStyle')) return;
     var css = ''
+      + '#adCursor{position:fixed;left:0;top:0;width:34px;height:39px;z-index:100001;pointer-events:none;opacity:0;'
+      + 'transition:transform .28s cubic-bezier(.22,.7,.3,1),opacity .25s ease;filter:drop-shadow(0 3px 6px rgba(30,24,18,.35))}'
+      + '#adCursor.on{opacity:1}'
+      + '#adRing{position:fixed;z-index:100000;pointer-events:none;border-radius:14px;border:2.5px solid rgba(166,108,194,.98);background:rgba(166,108,194,.10);'
+      + 'box-shadow:0 0 0 3px rgba(166,108,194,.16),0 0 18px rgba(166,108,194,.45);opacity:0}'
+      + '#adRing.pulse{animation:adPulse 1.05s cubic-bezier(.2,.7,.3,1) forwards}'
+      + '@keyframes adPulse{0%{opacity:0;transform:scale(.92)}18%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.08)}}'
+      + '#adTap{position:fixed;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;z-index:100001;'
+      + 'background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(166,108,194,.85) 45%,rgba(166,108,194,0) 70%);'
+      + 'pointer-events:none;opacity:0}'
+      + '#adTap.pulse{animation:adTap .55s ease-out forwards}'
+      + '@keyframes adTap{0%{opacity:.95;transform:scale(.5)}100%{opacity:0;transform:scale(2.1)}}'
       + '#adBar{position:fixed;left:0;top:0;height:2px;width:0;z-index:99999;background:linear-gradient(90deg,#A66CC2,#AD9162);opacity:.85;transition:width .2s linear;pointer-events:none}'
-      + '#adCap{position:fixed;left:50%;bottom:2.2vh;transform:translateX(-50%);z-index:99999;pointer-events:none;'+ 'max-width:82vw;text-align:center;line-height:1.5;'
+      + '#adCap{position:fixed;left:50%;bottom:2.2vh;transform:translateX(-50%);z-index:99999;pointer-events:none;'
+      + 'max-width:82vw;text-align:center;line-height:1.5;'
       + 'font-family:"Songti SC",SimSun,serif;font-size:15px;letter-spacing:.12em;color:#FFF8EC;'
       + 'padding:6px 18px;border-radius:18px;background:rgba(38,32,28,.46);backdrop-filter:blur(6px);'
       + 'white-space:nowrap;opacity:0;transition:opacity .45s ease}'
@@ -304,6 +404,7 @@
     timers.forEach(function (t) { clearTimeout(t); });
     timers = [];
     if (timers._esc) window.removeEventListener('keydown', timers._esc, true);
+    hidePointer();
     caption('');
     var b = $('#adBar'); if (b) b.remove();
     var c = $('#adCap'); if (c) c.remove();
