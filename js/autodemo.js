@@ -106,14 +106,90 @@
     if (t) t.classList.remove('pulse');
   }
 
-  /* 点击：光标先到位，220ms 后真点；支持传选择器或元素 */
+  var ARRIVE_MS = 470;          // 光标过渡 0.42s，点之前留一点余量
+
+  function cursorPos() {
+    var c = $('#adCursor');
+    if (!c) return null;
+    var m = /translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(c.style.transform || '');
+    if (!m) return null;
+    return { x: parseFloat(m[1]) + 17, y: parseFloat(m[2]) + 17 };
+  }
+  function driftTo(target) {
+    var cur = cursorPos();
+    if (!cur || !target || !target.getBoundingClientRect) return 0;
+    var r = target.getBoundingClientRect();
+    var dx = (r.left + r.width / 2) - cur.x;
+    var dy = (r.top + r.height / 2) - cur.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  /* 到位后再执行：偏差 > 12px 就重新指一次（多半是面板刚展开、元素位置变了） */
+  function arriveThen(target, opts, fn, retried) {
+    var d = driftTo(target);
+    var tries = retried || 0;
+    if (d > 22 && tries < 3) {
+      point(target, opts);
+      timers.push(setTimeout(function () { arriveThen(target, opts, fn, tries + 1); }, 300));
+      return;
+    }
+    if (d > 22) console.warn('[demo] 光标仍未到位：' + ((target.id || target.className || '?') + '（偏差 ' + Math.round(d) + 'px）'));
+    try { fn(); } catch (err) { console.warn('[demo]', err); }
+  }
+  /* 等元素位置稳定（面板滑入/滑出的动画结束） */
+  function waitStable(target, timeout) {
+    var limit = timeout || 1800;
+    var start = performance.now();
+    var last = null;
+    return new Promise(function (resolve) {
+      (function tick() {
+        if (!target) return resolve(false);
+        var r = target.getBoundingClientRect();
+        var cur = Math.round(r.left) + ',' + Math.round(r.top) + ',' + Math.round(r.width) + ',' + Math.round(r.height);
+        if (last === cur) return resolve(true);
+        last = cur;
+        if (performance.now() - start > limit) return resolve(false);
+        timers.push(setTimeout(tick, 120));
+      })();
+    });
+  }
+
+  /* 等某个条件成立（用它来判断面板"关掉"） */
+  function waitUntil(fn, timeout) {
+    var limit = timeout || 2500;
+    var start = performance.now();
+    return new Promise(function (resolve) {
+      (function tick() {
+        var ok = false;
+        try { ok = !!fn(); } catch (e) { ok = false; }
+        if (ok) return resolve(true);
+        if (performance.now() - start > limit) { console.warn('[demo] 等待超时'); return resolve(false); }
+        timers.push(setTimeout(tick, 60));
+      })();
+    });
+  }
+
+  /* 等某个选择器出现（面板展开 / 视图切换用） */
+  function waitFor(sel, timeout) {
+    var limit = timeout || 2500;
+    var start = performance.now();
+    return new Promise(function (resolve) {
+      (function tick() {
+        var e = typeof sel === 'string' ? el(sel) : sel;
+        if (e) return resolve(e);
+        if (performance.now() - start > limit) { console.warn('[demo] 等待超时：', sel); return resolve(null); }
+        timers.push(setTimeout(tick, 60));
+      })();
+    });
+  }
+
+  /* 点击：光标到位（必要时二次校准）后再点 */
   function click(sel, opts) {
     var e = typeof sel === 'string' ? el(sel) : sel;
     if (!e) { console.warn('[demo] 找不到点击目标：', sel); return false; }
     point(e, opts);
     timers.push(setTimeout(function () {
-      try { e.click(); } catch (err) { console.warn('[demo] click 失败', sel, err); }
-    }, 220));
+      arriveThen(e, opts, function () { e.click(); });
+    }, ARRIVE_MS));
     return true;
   }
 
@@ -136,7 +212,10 @@
   function pointThen(sel, fn) {
     var e = el(sel);
     if (e) point(e);
-    timers.push(setTimeout(function () { try { fn(); } catch (err) { console.warn('[demo]', err); } }, 240));
+    timers.push(setTimeout(function () {
+      if (e && driftTo(e) > 12) point(e);
+      try { fn(); } catch (err) { console.warn('[demo]', err); }
+    }, ARRIVE_MS));
   }
 
   function pressLong(sel, ms) {
@@ -145,8 +224,12 @@
     point(node, { pad: 18, radius: '24px' });
     var c = centre(node);
     var wasLit = document.body.classList.contains('is-lit');
-    node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
-    return sleep(ms || 2000).then(function () {
+    return sleep(ARRIVE_MS).then(function () {
+      if (driftTo(node) > 12) { point(node, { pad: 18, radius: '24px' }); c = centre(node); return sleep(ARRIVE_MS); }
+    }).then(function () {
+      node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
+      return sleep(ms || 2000);
+    }).then(function () {
       window.dispatchEvent(firePointer('pointerup', c.x, c.y));
       return sleep(320);
     }).then(function () {
@@ -161,8 +244,12 @@
     if (!node) return;
     point(node, { pad: 8 });
     var c = centre(node);
-    node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
-    return sleep(60).then(function () {
+    return sleep(ARRIVE_MS).then(function () {
+      if (driftTo(node) > 12) { point(node, { pad: 8 }); c = centre(node); return sleep(ARRIVE_MS); }
+    }).then(function () {
+      node.dispatchEvent(firePointer('pointerdown', c.x, c.y));
+      return sleep(60);
+    }).then(function () {
       window.dispatchEvent(firePointer('pointermove', c.x + (dx || 0), c.y + (dy || 0)));
       return sleep(140);
     }).then(function () {
@@ -174,12 +261,15 @@
   }
   function setRange(sel, v) {
     var e = el(sel);
-    if (!e) return;
+    if (!e) { console.warn('[demo] 找不到滑杆', sel); return; }
     point(e, { pad: 6 });
-    setTimeout(function () { point(e, { pad: 6 }); }, 260);
-    e.value = v;
-    e.dispatchEvent(new Event('input', { bubbles: true }));
-    e.dispatchEvent(new Event('change', { bubbles: true }));
+    timers.push(setTimeout(function () {
+      if (driftTo(e) > 12) point(e, { pad: 6 });
+      e.value = v;
+      e.dispatchEvent(new Event('input', { bubbles: true }));
+      e.dispatchEvent(new Event('change', { bubbles: true }));
+      point(e, { pad: 6 });
+    }, ARRIVE_MS));
   }
   function firePointer(type, x, y) {
     return new PointerEvent(type, {
@@ -200,7 +290,7 @@
     if ($('#adStyle')) return;
     var css = ''
       + '#adCursor{position:fixed;left:0;top:0;width:34px;height:34px;z-index:100001;pointer-events:none;opacity:0;'
-      + 'transition:transform .95s cubic-bezier(.33,.02,.2,1),opacity .45s ease;filter:drop-shadow(0 2px 5px rgba(30,20,16,.30)) drop-shadow(0 0 8px rgba(199,80,63,.35))}'
+      + 'transition:transform .42s cubic-bezier(.3,.1,.25,1),opacity .3s ease;filter:drop-shadow(0 2px 5px rgba(30,20,16,.30)) drop-shadow(0 0 8px rgba(199,80,63,.35))}'
       + '#adCursor.on{opacity:.72}'
       + '#adCursor svg{animation:adBloom 4.2s ease-in-out infinite;transform-origin:50% 50%}'
       + '@keyframes adBloom{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}'
@@ -361,50 +451,91 @@
       }],
       [66.6, '回到今日：运行中；桌宠可拖动、可置顶，安静陪在旁边', function () {
         viewTo('today');
-        timers.push(setTimeout(function () { click('#btnPet'); }, 900));
+        timers.push(setTimeout(function () { click('#btnPet'); }, 1300));
       }],
-      [70.6, '收桌宠、开「更多」菜单：360° 样机、声、使用边界都在这里', function () {
-        click('#btnPet');
-        timers.push(setTimeout(function () { click('#btnMore'); }, 800));
+      [70.6, '更多：360° 样机、声、使用边界，都收在这个菜单里', function () {
+        var pet = el('.pet');
+        if (pet && !pet.classList.contains('is-hidden')) click('#btnPet');
+        timers.push(setTimeout(function () { click('#btnMore'); }, 1000));
       }],
-      [72.8, '声：音效与音乐分别开关，音量单独可调', function () { click('#btnSound'); }],
-      [75.2, '点香的脆响、燃烧的底噪与界面提示，都在这里控制', function () { click('#swSfx'); }],
+      [72.8, '声：音效与音乐分别开关，音量单独可调', function () {
+        click('#btnSound');
+      }],
+      [75.2, '点香的脆响、燃烧的底噪与界面提示，都在这里控制', function () {
+        waitFor('#soundSheet.is-on', 2000).then(function () {
+          timers.push(setTimeout(function () { click('#swSfx'); }, 600));
+        });
+        return;
+      }],
       [77.4, '360° 查看器：手环 144 帧转台，拖动即刻旋转', function () {
         click('#soundClose');
-        timers.push(setTimeout(function () { click('#btnViewer'); }, 520));
         timers.push(setTimeout(function () {
-          var t = el('.viewer-tab[data-model="band"]');
-          if (t) click(t);
-        }, 1200));
+          click('#btnViewer');
+          waitFor('.viewer.is-on', 3000).then(function () {
+            timers.push(setTimeout(function () {
+              var t = el('.viewer-tab[data-model="band"]');
+              if (t) click(t);
+            }, 900));
+          });
+        }, 1000));
+        return;
       }],
       [80.4, '也可用方向键逐帧查看，每一帧相差 2.5 度', function () {
-        var stage = el('#viewer') || el('.viewer');
-        if (stage) point(stage);
-        var n = 0, iv = setInterval(function () { key('ArrowRight'); if (++n > 7) clearInterval(iv); }, 100);
+        waitFor('.viewer.is-on', 2500).then(function () {
+          var stage = el('.viewer-stage') || el('.viewer');
+          if (stage) point(stage);
+          var n = 0, iv = setInterval(function () { key('ArrowRight'); if (++n > 7) clearInterval(iv); }, 110);
+        });
+        return;
       }],
       [82.6, '同一个查看器里，切换到香炉样机继续看', function () {
-        var t = el('.viewer-tab[data-model="censer"]');
-        if (t) click(t);
+        waitFor('.viewer.is-on', 2000).then(function () {
+          var t = el('.viewer-tab[data-model="censer"]');
+          if (t) click(t); else console.warn('[demo] 找不到香炉页签');
+        });
+        return;
       }],
       [84.6, '使用边界与非遗香篆八步：这门技艺编号 Ⅷ-224', function () {
-        var close = el('.viewer-close');
-        if (close) click(close);
-        timers.push(setTimeout(function () {
-          if (!document.querySelector('#moreMenu.is-on')) click('#btnMore');
-        }, 560));
-        timers.push(setTimeout(function () { click('#btnRef'); }, 1150));
+        var vc = el('.viewer-close');
+        if (vc) click(vc);
+        waitUntil(function () { var v = el('.viewer'); return !v || !v.classList.contains('is-on'); }, 2200).then(function () {
+          timers.push(setTimeout(function () { click('#btnRef'); }, 800));
+          return waitFor('#refSheet.is-on', 2500);
+        });
+        return;
       }],
       [86.4, '香事小游戏：4-7-8 呼吸引导，把注意力放回呼吸本身', function () {
-        var tab = el('[data-ref-page="game"]');
-        if (tab) click(tab); else console.warn('[demo] 找不到小游戏页签');
+        waitFor('#refSheet.is-on', 4000).then(function () {
+          var tab = el('[data-ref-page="game"]');
+          return waitStable(tab, 1600).then(function () {
+            if (tab) click(tab); else console.warn('[demo] 找不到小游戏页签');
+          });
+        });
+        return;
       }],
       [88.0, '合上香事，切到夜间：雾蓝纸、墨迹转场，画面整体压暗一档', function () {
-        var close = el('#refClose');
-        if (close) click(close);
-        timers.push(setTimeout(function () { themeTo('night'); }, 640));
+        waitFor('#refSheet.is-on', 3000).then(function () {
+          var close = el('#refClose');
+          return waitStable(close, 1600).then(function () {
+            if (close) click(close);
+          });
+        }).then(function () {
+          return waitUntil(function () {
+            var r = el('#refSheet');
+            return !r || !r.classList.contains('is-on');
+          }, 2000);
+        }).then(function () {
+          timers.push(setTimeout(function () { themeTo('night'); }, 900));
+        });
+        return;
       }],
-      [89.4, '夜间点香，花瓣再次张开，一天到这里收个尾', function () { pressLong('#censer', 1200); }],
-      [92.2, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
+      [89.6, '夜间点香，花瓣再次张开，一天到这里收个尾', function () {
+        waitUntil(function () { return root.getAttribute('data-theme') === 'night'; }, 2200).then(function () {
+          pressLong('#censer', 1200);
+        });
+        return;
+      }],
+      [92.4, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
       [94.0, '', function () { finish(); }]
     ];
   }
