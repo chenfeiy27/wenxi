@@ -26,15 +26,15 @@
   var CURSOR_SVG = ''
     + '<svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">'
     + '<g transform="translate(20 20)">'
-    + '<g fill="#F5C9D4" stroke="#FFFFFF" stroke-width="1.1" opacity=".97">'
+    + '<g fill="#C7503F" stroke="#FFF3E6" stroke-width="1.1" opacity=".92">'
     + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4"/>'
     + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(72)"/>'
     + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(144)"/>'
     + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(216)"/>'
     + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(288)"/>'
     + '</g>'
-    + '<circle r="3.7" fill="#C9A15B" stroke="#FFF8EC" stroke-width="1"/>'
-    + '<circle r="1.5" fill="#8E6B32"/>'
+    + '<circle r="3.7" fill="#F3C777" stroke="#FFF8EC" stroke-width="1"/>'
+    + '<circle r="1.5" fill="#7A3B1E"/>'
     + '</g></svg>';
 
   function ensurePointer() {
@@ -200,10 +200,10 @@
     if ($('#adStyle')) return;
     var css = ''
       + '#adCursor{position:fixed;left:0;top:0;width:34px;height:34px;z-index:100001;pointer-events:none;opacity:0;'
-      + 'transition:transform .3s cubic-bezier(.22,.7,.3,1),opacity .3s ease;filter:drop-shadow(0 2px 5px rgba(60,40,30,.35)) drop-shadow(0 0 7px rgba(243,198,210,.55))}'
-      + '#adCursor.on{opacity:1}'
-      + '#adCursor svg{animation:adBloom 3.4s ease-in-out infinite;transform-origin:50% 50%}'
-      + '@keyframes adBloom{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(7deg) scale(1.07)}}'
+      + 'transition:transform .95s cubic-bezier(.33,.02,.2,1),opacity .45s ease;filter:drop-shadow(0 2px 5px rgba(30,20,16,.30)) drop-shadow(0 0 8px rgba(199,80,63,.35))}'
+      + '#adCursor.on{opacity:.72}'
+      + '#adCursor svg{animation:adBloom 4.2s ease-in-out infinite;transform-origin:50% 50%}'
+      + '@keyframes adBloom{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(5deg) scale(1.05)}}'
       + '#adRing{position:fixed;z-index:100000;pointer-events:none;border-radius:14px;border:2.5px solid rgba(166,108,194,.98);background:rgba(166,108,194,.10);'
       + 'box-shadow:0 0 0 3px rgba(166,108,194,.16),0 0 18px rgba(166,108,194,.45);opacity:0}'
       + '#adRing.pulse{animation:adPulse 1.05s cubic-bezier(.2,.7,.3,1) forwards}'
