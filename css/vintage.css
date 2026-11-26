@@ -2015,3 +2015,74 @@ html[data-skin="vintage"][data-theme="day"] .flower-stage img {
   filter: none !important;
   transition: none !important;
 }
+
+
+/* ============================================================
+   修复：状态行（行止 / 数据不足）在夜间几乎看不清
+   原因：.tcm-line 用了 --quiet 再叠 0.8 透明度，.tcm-note 再叠 0.82，
+         .tcm-tag 用的是低饱和的状态色（#8A8378），深底上对比度不足
+   做法：状态行文字改用近白并去掉透明度；标签改成“浅字 + 状态色描边”，
+         语义色保留在边框上，文字保证可读
+   ============================================================ */
+html[data-skin="vintage"] .tcm-line {
+  color: var(--quiet);
+  opacity: 1;
+  font-size: 14px;
+  letter-spacing: .12em;
+}
+html[data-skin="vintage"] .tcm-line .tcm-note,
+html[data-skin="vintage"] .tcm-line .tcm-conf {
+  opacity: 1;
+  color: inherit;
+}
+html[data-skin="vintage"] .tcm-tag {
+  background: none;
+  box-shadow: none;
+  padding: 1px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--state-color, var(--jade));
+  font-size: 14.5px;
+}
+
+/* 夜间：文字近白，标签浅底描边 */
+html[data-skin="vintage"][data-theme="night"] .tcm-line { color: #DCE5EE; }
+html[data-skin="vintage"][data-theme="night"] .tcm-line .tcm-note { color: #C9D5E1; }
+html[data-skin="vintage"][data-theme="night"] .tcm-line .tcm-conf { color: #B7C4D2; }
+html[data-skin="vintage"][data-theme="night"] .tcm-tag {
+  color: #F7EFE3;
+  background: rgba(255, 255, 255, .05);
+  text-shadow: 0 1px 2px rgba(10, 16, 24, .45);
+}
+
+/* 白天：文字加深 */
+html[data-skin="vintage"][data-theme="day"] .tcm-line { color: #4F443A; }
+html[data-skin="vintage"][data-theme="day"] .tcm-line .tcm-note { color: #645749; }
+html[data-skin="vintage"][data-theme="day"] .tcm-line .tcm-conf { color: #675B4D; }
+html[data-skin="vintage"][data-theme="day"] .tcm-tag {
+  color: #463A31;
+  background: rgba(255, 255, 255, .34);
+}
+
+
+/* ============================================================
+   状态色在深/浅底上的可读性：只改 CSS 变量，不动 state-color.css 的 !important 规则
+   （heping / xingzhi / unknown 这三个是“描边字”形态，文字直接用 --state-color）
+   ============================================================ */
+html[data-skin="vintage"][data-theme="night"][data-state="heping"] {
+  --state-color: #A9CBA8;
+  --state-line: rgba(169, 203, 168, .58);
+}
+html[data-skin="vintage"][data-theme="night"][data-state="xingzhi"],
+html[data-skin="vintage"][data-theme="night"][data-state="unknown"] {
+  --state-color: #D6DBD3;
+  --state-line: rgba(214, 219, 211, .55);
+}
+html[data-skin="vintage"][data-theme="day"][data-state="heping"] {
+  --state-color: #46674A;
+  --state-line: rgba(70, 103, 74, .55);
+}
+html[data-skin="vintage"][data-theme="day"][data-state="xingzhi"],
+html[data-skin="vintage"][data-theme="day"][data-state="unknown"] {
+  --state-color: #625845;
+  --state-line: rgba(98, 88, 69, .55);
+}
