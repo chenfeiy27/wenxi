@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var TOTAL = 90;            // 秒
+  var TOTAL = 92;            // 秒（含结尾停留）
   var root = document.documentElement;
   var running = false;
   var timers = [];
@@ -23,9 +23,19 @@
   function sleep(ms) { return new Promise(function (r) { timers.push(setTimeout(r, ms)); }); }
   function el(sel) { try { return $(sel); } catch (e) { return null; } }
   /* ---------- 指示光标：先移动指针，再落点击 ---------- */
-  var CURSOR_SVG = '<svg viewBox="0 0 26 30" width="34" height="39" aria-hidden="true">'
-    + '<path d="M3 2 L3 23 L8.6 17.6 L12.2 26 L16 24.3 L12.4 16 L20 16 Z" '
-    + 'fill="#2B2622" stroke="#FFF8EC" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+  var CURSOR_SVG = ''
+    + '<svg viewBox="0 0 40 40" width="34" height="34" aria-hidden="true">'
+    + '<g transform="translate(20 20)">'
+    + '<g fill="#F5C9D4" stroke="#FFFFFF" stroke-width="1.1" opacity=".97">'
+    + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4"/>'
+    + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(72)"/>'
+    + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(144)"/>'
+    + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(216)"/>'
+    + '  <ellipse cx="0" cy="-9.2" rx="5.2" ry="8.4" transform="rotate(288)"/>'
+    + '</g>'
+    + '<circle r="3.7" fill="#C9A15B" stroke="#FFF8EC" stroke-width="1"/>'
+    + '<circle r="1.5" fill="#8E6B32"/>'
+    + '</g></svg>';
 
   function ensurePointer() {
     var cur = $('#adCursor');
@@ -58,7 +68,7 @@
     var x = r.left + r.width / 2;
     var y = r.top + r.height / 2;
     // 指针：箭尖对准目标中心
-    P.cur.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    P.cur.style.transform = 'translate(' + (x - 17) + 'px,' + (y - 17) + 'px)';
     P.cur.classList.add('on');
     // 光圈：贴住元素外框
     var pad = opts && opts.pad != null ? opts.pad : 6;
@@ -70,8 +80,6 @@
       P.tap.style.top = y + 'px';
       void P.tap.offsetWidth;
       P.tap.classList.add('pulse');
-      clearTimeout(point._t);
-      point._t = setTimeout(function () { P.cur.classList.remove('on'); }, 2200);
       return;
     }
     P.ring.style.left = (r.left - pad) + 'px';
@@ -88,9 +96,7 @@
     P.tap.classList.remove('pulse');
     void P.tap.offsetWidth;
     P.tap.classList.add('pulse');
-    // 一段时间不动就淡出
-    clearTimeout(point._t);
-    point._t = setTimeout(function () { P.cur.classList.remove('on'); }, 2200);
+    // 常驻：不再自动淡出
   }
 
   function hidePointer() {
@@ -100,28 +106,39 @@
     if (t) t.classList.remove('pulse');
   }
 
-  /* 点击：先把指针移过去，220ms 后再真的点 */
-  function click(sel) {
+  /* 点击：光标先到位，220ms 后真点；支持传选择器或元素 */
+  function click(sel, opts) {
     var e = typeof sel === 'string' ? el(sel) : sel;
-    if (!e) return false;
-    point(e);
+    if (!e) { console.warn('[demo] 找不到点击目标：', sel); return false; }
+    point(e, opts);
     timers.push(setTimeout(function () {
-      try { e.click(); } catch (err) {}
+      try { e.click(); } catch (err) { console.warn('[demo] click 失败', sel, err); }
     }, 220));
     return true;
   }
-  function firePointer(type, x, y) {
-    var ev = new PointerEvent(type, {
-      bubbles: true, cancelable: true, composed: true,
-      clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0, buttons: type === 'pointerup' ? 0 : 1,
-      pointerType: 'mouse'
-    });
-    return ev;
+
+  /* 视图 / 主题也走真实按钮，保证「点哪儿变哪儿」 */
+  function viewTo(v) {
+    var tab = el('.tab[data-view="' + v + '"]') || el('.tabs [data-view="' + v + '"]');
+    if (tab) return click(tab);
+    console.warn('[demo] 找不到标签页', v);
+    if (api().setView) api().setView(v);
+    return false;
   }
-  function centre(node) {
-    var r = node.getBoundingClientRect();
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r };
+  function themeTo(t) {
+    if (root.getAttribute('data-theme') === t) {
+      var b = el('#btnTheme'); if (b) point(b);
+      return true;
+    }
+    return click('#btnTheme');
   }
+  /* 没有可点元素时：光标先停在相关元素上，再调 API */
+  function pointThen(sel, fn) {
+    var e = el(sel);
+    if (e) point(e);
+    timers.push(setTimeout(function () { try { fn(); } catch (err) { console.warn('[demo]', err); } }, 240));
+  }
+
   function pressLong(sel, ms) {
     var node = el(sel);
     if (!node) return Promise.resolve();
@@ -164,15 +181,29 @@
     e.dispatchEvent(new Event('input', { bubbles: true }));
     e.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  function firePointer(type, x, y) {
+    return new PointerEvent(type, {
+      bubbles: true, cancelable: true, composed: true,
+      clientX: x, clientY: y, pointerId: 1, isPrimary: true,
+      button: 0, buttons: type === 'pointerup' ? 0 : 1, pointerType: 'mouse'
+    });
+  }
+
+  function centre(node) {
+    var r = node.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r };
+  }
   function api() { return window.__wenxi || {}; }
 
   /* ---------------- 字幕 / 进度条 / 开始层 ---------------- */
   function injectStyle() {
     if ($('#adStyle')) return;
     var css = ''
-      + '#adCursor{position:fixed;left:0;top:0;width:34px;height:39px;z-index:100001;pointer-events:none;opacity:0;'
-      + 'transition:transform .28s cubic-bezier(.22,.7,.3,1),opacity .25s ease;filter:drop-shadow(0 3px 6px rgba(30,24,18,.35))}'
+      + '#adCursor{position:fixed;left:0;top:0;width:34px;height:34px;z-index:100001;pointer-events:none;opacity:0;'
+      + 'transition:transform .3s cubic-bezier(.22,.7,.3,1),opacity .3s ease;filter:drop-shadow(0 2px 5px rgba(60,40,30,.35)) drop-shadow(0 0 7px rgba(243,198,210,.55))}'
       + '#adCursor.on{opacity:1}'
+      + '#adCursor svg{animation:adBloom 3.4s ease-in-out infinite;transform-origin:50% 50%}'
+      + '@keyframes adBloom{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(7deg) scale(1.07)}}'
       + '#adRing{position:fixed;z-index:100000;pointer-events:none;border-radius:14px;border:2.5px solid rgba(166,108,194,.98);background:rgba(166,108,194,.10);'
       + 'box-shadow:0 0 0 3px rgba(166,108,194,.16),0 0 18px rgba(166,108,194,.45);opacity:0}'
       + '#adRing.pulse{animation:adPulse 1.05s cubic-bezier(.2,.7,.3,1) forwards}'
@@ -282,77 +313,99 @@
   /* ---------------- 时间轴 ---------------- */
   function steps() {
     return [
-      /* ---------- 入场 + 今日 ---------- */
       [0.0, '轻触入室，纸面墨迹化开——闻息开始了', function () {
-        if (api().theme) api().theme('day');
-        if (el('#gate')) click('#gate');
+        themeTo('day');
+        click('#gate');
       }],
-      [3.2, '今日：腕表与香氛仪的连接状态、电量与余量，一眼看完', function () { api().setView && api().setView('today'); }],
-      [6.6, '长按香炉，金色进度环蓄满一圈，就是点燃', function () { pressLong('#censer', 2000); }],
-      [9.4, '点燃的一瞬：花瓣张开、粉色香雾升起，一声轻响后转成细细的燃烧声', null],
-      /* ---------- 中医状态层 ---------- */
-      [12.6, '系统判定为「心火偏亢」：夜间心率没有回落、心率变异性偏低', function () { api().previewState && api().previewState('xinhuo', 3.6); }],
-      [16.4, '同一套判据下的另一种倾向：气血两虚，身体的调节储备偏低', function () { api().previewState && api().previewState('qixue', 3.4); }],
-      [20.2, '四类复合指纹之阴虚火旺：夜间心率下降不足、变异性走低', function () { api().previewState && api().previewState('yinxu', 3.4); }],
-      [24.0, '点开身体数据：心率、HRV、近三十分钟趋势，以及判定的具体依据', function () { click('#btnDetail'); }],
-      [28.6, '收起详情，回到安静的今日界面', function () { click('#sheetClose'); }],
-      /* ---------- 记录 ---------- */
-      [29.6, '记录：本月日历，有过点香的日子会留一枚金点', function () { api().setView && api().setView('records'); }],
-      [33.4, '同页下方是心率趋势与香事录——只记录陪伴，不评价状态', function () {
-        var cal = el('.rec-cal');
-        if (!cal) return;
-        var cells = cal.querySelectorAll('div,span,button');
-        for (var i = 0; i < cells.length; i++) {
-          if (cells[i].children.length === 0 && cells[i].textContent.trim() === '12') { cells[i].click(); return; }
-        }
+      [3.4, '今日：腕表与香氛仪的连接状态、电量与余量，一眼看完', function () { viewTo('today'); }],
+      [6.9, '长按香炉，金色进度环蓄满一圈，就是点燃', function () { pressLong('#censer', 2000); }],
+      [9.7, '点燃的一瞬：花瓣张开、粉色香雾升起，一声轻响后转成细细的燃烧声', null],
+      [13.0, '系统判定为「心火偏亢」：夜间心率没有回落、心率变异性偏低', function () {
+        pointThen('#tcmTag', function () { api().previewState && api().previewState('xinhuo', 3.4); });
       }],
-      /* ---------- 调节 ---------- */
-      [37.0, '调节：选一个场景，君臣佐使的配比会自动生成', function () { api().setView && api().setView('adjust'); }],
-      [40.4, '切换场景时，三味比例逐帧缓动，像真实换香那样过渡', function () {
-        var seq = ['relax', 'sleep', 'lift'];
-        seq.forEach(function (name, k) {
-          setTimeout(function () { click('.scene[data-scene="' + name + '"]'); }, k * 900);
-        });
+      [16.6, '同一套判据下的另一种倾向：气血两虚，身体的调节储备偏低', function () {
+        pointThen('#tcmTag', function () { api().previewState && api().previewState('qixue', 3.2); });
       }],
-      [44.6, '扩香强度五档、时长三档，按此刻想要的浓淡来调', function () { setRange('#intensity', 4); }],
-      [48.2, '声音陪伴：静默、环境音、轻音乐，三档可选', function () { var sb = document.querySelectorAll('#soundSeg button'); if (sb[1]) sb[1].click(); }],
-      [51.8, '调节权也可以交出去：手动、半自动、自动、完全自动四档', function () {
-        var b = document.querySelector('.auto-mode[data-auto="auto"]');
-        if (b) b.click();
+      [20.2, '四类复合指纹之阴虚火旺：夜间心率下降不足、变异性走低', function () {
+        pointThen('#tcmTag', function () { api().previewState && api().previewState('yinxu', 3.2); });
       }],
-      [55.2, '也能直接拖圆环，手动微调三味的比例', function () { drag(el('#arcH0'), 46, 0); }],
-      [58.4, '开始运行：进度与倒计时同步走，一炷香烧完便结束', function () { click('#btnStart'); api().run && api().run(true); }],
-      [61.6, '半自动模式下，系统会先给一句建议，等你点头才动配比', function () { api().suggest && api().suggest(true); setTimeout(function () { click('#btnAccept'); }, 1400); }],
-      /* ---------- 今日 / 桌宠 / 更多 ---------- */
-      [65.0, '回到今日：运行中；桌宠可拖动、可置顶，安静陪在旁边', function () { api().setView && api().setView('today'); click('#btnPet'); }],
-      [68.6, '更多：360° 样机、声、使用边界，都收在这个菜单里', function () { click('#btnPet'); click('#btnMore'); }],
-      [70.6, '声：音效与音乐分别开关，音量单独可调', function () { click('#btnSound'); }],
-      [73.0, '点香的脆响、燃烧的底噪与界面提示，都在这里控制', function () { click('#swSfx'); }],
-      /* ---------- 360 ---------- */
-      [74.6, '360° 查看器：手环 144 帧转台，拖动即刻旋转', function () { click('#soundClose'); click('#btnViewer'); if (window.Viewer360) window.Viewer360.model('band'); }],
-      [77.4, '也可用方向键逐帧查看，每一帧相差 2.5 度', function () {
+      [23.8, '点开身体数据：心率、HRV、近三十分钟趋势，以及判定的具体依据', function () { click('#btnDetail'); }],
+      [28.2, '收起详情，回到安静的今日界面', function () { click('#sheetClose'); }],
+      [29.2, '记录：本月日历，有过点香的日子会留一枚金点', function () { viewTo('records'); }],
+      [32.8, '点一个日期，看这天的香事', function () {
+        var day = el('.cal-day.has') || el('.cal-day');
+        if (!day) { console.warn('[demo] 找不到日历单元'); return; }
+        click(day, { pad: 4, radius: '50%' });
+      }],
+      [36.6, '同页下方是心率趋势与香事录——只记录陪伴，不评价状态', null],
+      [40.2, '调节：选一个场景，君臣佐使的配比会自动生成', function () { viewTo('adjust'); }],
+      [43.4, '切换场景时，三味比例逐帧缓动，像真实换香那样过渡', function () {
+        timers.push(setTimeout(function () { click('.scene[data-scene="relax"]'); }, 0));
+        timers.push(setTimeout(function () { click('.scene[data-scene="sleep"]'); }, 1000));
+        timers.push(setTimeout(function () { click('.scene[data-scene="lift"]'); }, 2000));
+      }],
+      [47.4, '扩香强度五档、时长三档，按此刻想要的浓淡来调', function () { setRange('#intensity', 4); }],
+      [50.8, '声音陪伴：静默、环境音、轻音乐，三档可选', function () {
+        var segs = document.querySelectorAll('#soundSeg button');
+        if (segs[1]) click(segs[1]); else console.warn('[demo] 找不到声音陪伴');
+      }],
+      [54.0, '调节权也可以交出去：手动、半自动、自动、完全自动四档', function () {
+        var b = el('.auto-mode[data-auto="auto"]');
+        if (b) click(b); else console.warn('[demo] 找不到 auto-mode');
+      }],
+      [57.2, '也能直接拖圆环，手动微调三味的比例', function () { drag(el('#arcH0'), 46, 0); }],
+      [60.2, '开始运行：进度与倒计时同步走，一炷香烧完便结束', function () { click('#btnStart'); }],
+      [63.2, '半自动模式下，系统会先给一句建议，等你点头才动配比', function () {
+        var acc = el('#btnAccept');
+        if (acc && acc.offsetParent) click(acc);
+      }],
+      [66.6, '回到今日：运行中；桌宠可拖动、可置顶，安静陪在旁边', function () {
+        viewTo('today');
+        timers.push(setTimeout(function () { click('#btnPet'); }, 900));
+      }],
+      [70.6, '收桌宠、开「更多」菜单：360° 样机、声、使用边界都在这里', function () {
+        click('#btnPet');
+        timers.push(setTimeout(function () { click('#btnMore'); }, 800));
+      }],
+      [72.8, '声：音效与音乐分别开关，音量单独可调', function () { click('#btnSound'); }],
+      [75.2, '点香的脆响、燃烧的底噪与界面提示，都在这里控制', function () { click('#swSfx'); }],
+      [77.4, '360° 查看器：手环 144 帧转台，拖动即刻旋转', function () {
+        click('#soundClose');
+        timers.push(setTimeout(function () { click('#btnViewer'); }, 520));
+        timers.push(setTimeout(function () {
+          var t = el('.viewer-tab[data-model="band"]');
+          if (t) click(t);
+        }, 1200));
+      }],
+      [80.4, '也可用方向键逐帧查看，每一帧相差 2.5 度', function () {
+        var stage = el('#viewer') || el('.viewer');
+        if (stage) point(stage);
         var n = 0, iv = setInterval(function () { key('ArrowRight'); if (++n > 7) clearInterval(iv); }, 100);
       }],
-      [79.6, '同一个查看器里，切换到香炉样机继续看', function () {
-        if (window.Viewer360) window.Viewer360.model('censer');
-        var n = 0, iv = setInterval(function () { key('ArrowLeft'); if (++n > 6) clearInterval(iv); }, 100);
+      [82.6, '同一个查看器里，切换到香炉样机继续看', function () {
+        var t = el('.viewer-tab[data-model="censer"]');
+        if (t) click(t);
       }],
-      /* ---------- 非遗 + 小游戏 ---------- */
-      [82.0, '使用边界与非遗香篆八步：这门技艺编号 Ⅷ-224', function () {
-        if (window.Viewer360) window.Viewer360.close();
-        click('#btnRef');
+      [84.6, '使用边界与非遗香篆八步：这门技艺编号 Ⅷ-224', function () {
+        var close = el('.viewer-close');
+        if (close) click(close);
+        timers.push(setTimeout(function () {
+          if (!document.querySelector('#moreMenu.is-on')) click('#btnMore');
+        }, 560));
+        timers.push(setTimeout(function () { click('#btnRef'); }, 1150));
       }],
-      [84.0, '香事小游戏：4-7-8 呼吸引导，把注意力放回呼吸本身', function () {
-        var tab = document.querySelector('[data-ref-page="game"]');
-        if (tab) tab.click();
+      [86.4, '香事小游戏：4-7-8 呼吸引导，把注意力放回呼吸本身', function () {
+        var tab = el('[data-ref-page="game"]');
+        if (tab) click(tab); else console.warn('[demo] 找不到小游戏页签');
       }],
-      [86.0, '切到夜间：雾蓝纸、墨迹转场，器物与文字整体压暗一档', function () {
-        click('#refClose');
-        api().theme && api().theme('night');
+      [88.0, '合上香事，切到夜间：雾蓝纸、墨迹转场，画面整体压暗一档', function () {
+        var close = el('#refClose');
+        if (close) click(close);
+        timers.push(setTimeout(function () { themeTo('night'); }, 640));
       }],
-      [87.4, '夜间点香，花瓣再次张开，一天到这里收个尾', function () { pressLong('#censer', 1600); }],
-      [89.4, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
-      [90.0, '', function () { finish(); }]
+      [89.4, '夜间点香，花瓣再次张开，一天到这里收个尾', function () { pressLong('#censer', 1200); }],
+      [92.2, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
+      [94.0, '', function () { finish(); }]
     ];
   }
 
