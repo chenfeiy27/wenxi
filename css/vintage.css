@@ -2086,3 +2086,13 @@ html[data-skin="vintage"][data-theme="day"][data-state="unknown"] {
   --state-color: #625845;
   --state-line: rgba(98, 88, 69, .55);
 }
+
+
+/* 「看见身体信号 →」这类文字链接，夜间同样偏暗，一并提亮 */
+html[data-skin="vintage"] .link-btn {
+  opacity: 1;
+  color: var(--quiet);
+}
+html[data-skin="vintage"][data-theme="night"] .link-btn { color: #C9D5E1; }
+html[data-skin="vintage"][data-theme="day"] .link-btn { color: #5C5044; }
+html[data-skin="vintage"] .link-btn:hover { color: var(--purple-on); }
