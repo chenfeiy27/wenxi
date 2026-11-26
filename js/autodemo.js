@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  var TOTAL = 92;            // 秒（含结尾停留）
+  var TOTAL = 90;            // 秒
   var root = document.documentElement;
   var running = false;
   var timers = [];
@@ -480,7 +480,7 @@
         }, 1000));
         return;
       }],
-      [80.4, '也可用方向键逐帧查看，每一帧相差 2.5 度', function () {
+      [79.8, '也可用方向键逐帧查看，每一帧相差 2.5 度', function () {
         waitFor('.viewer.is-on', 2500).then(function () {
           var stage = el('.viewer-stage') || el('.viewer');
           if (stage) point(stage);
@@ -488,14 +488,14 @@
         });
         return;
       }],
-      [82.6, '同一个查看器里，切换到香炉样机继续看', function () {
+      [81.8, '同一个查看器里，切换到香炉样机继续看', function () {
         waitFor('.viewer.is-on', 2000).then(function () {
           var t = el('.viewer-tab[data-model="censer"]');
           if (t) click(t); else console.warn('[demo] 找不到香炉页签');
         });
         return;
       }],
-      [84.6, '使用边界与非遗香篆八步：这门技艺编号 Ⅷ-224', function () {
+      [83.4, '使用边界与非遗香篆八步：这门技艺编号 Ⅷ-224', function () {
         var vc = el('.viewer-close');
         if (vc) click(vc);
         waitUntil(function () { var v = el('.viewer'); return !v || !v.classList.contains('is-on'); }, 2200).then(function () {
@@ -504,7 +504,7 @@
         });
         return;
       }],
-      [86.4, '香事小游戏：4-7-8 呼吸引导，把注意力放回呼吸本身', function () {
+      [85.0, '香事小游戏：4-7-8 呼吸引导，把注意力放回呼吸本身', function () {
         waitFor('#refSheet.is-on', 4000).then(function () {
           var tab = el('[data-ref-page="game"]');
           return waitStable(tab, 1600).then(function () {
@@ -513,7 +513,7 @@
         });
         return;
       }],
-      [88.0, '合上香事，切到夜间：雾蓝纸、墨迹转场，画面整体压暗一档', function () {
+      [86.2, '合上香事，切到夜间：雾蓝纸、墨迹转场，画面整体压暗一档', function () {
         waitFor('#refSheet.is-on', 3000).then(function () {
           var close = el('#refClose');
           return waitStable(close, 1600).then(function () {
@@ -525,18 +525,18 @@
             return !r || !r.classList.contains('is-on');
           }, 2000);
         }).then(function () {
-          timers.push(setTimeout(function () { themeTo('night'); }, 900));
+          timers.push(setTimeout(function () { themeTo('night'); }, 1250));
         });
         return;
       }],
-      [89.6, '夜间点香，花瓣再次张开，一天到这里收个尾', function () {
+      [87.0, '夜间点香，花瓣再次张开，一天到这里收个尾', function () {
         waitUntil(function () { return root.getAttribute('data-theme') === 'night'; }, 2200).then(function () {
           pressLong('#censer', 1200);
         });
         return;
       }],
-      [92.4, '闻息 · 非遗药香 × 中医状态 × 香氛装置', null],
-      [94.0, '', function () { finish(); }]
+      [88.4, '闻息 · 停云 —— 非遗药香 × 中医状态 × 香氛装置', null],
+      [90.0, '', function () { finish(); }]
     ];
   }
 
