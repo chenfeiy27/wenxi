@@ -1931,7 +1931,7 @@ html[data-skin="vintage"][data-theme="night"] .censer-ground-shadow {
 html[data-skin="vintage"] #censerFlash { display: none !important; }
 
 
-/* 开花：AI 水彩图 + 位移张开版，0.75 秒交叉淡入 */
+/* 开花：水彩图 + 位移张开版，0.75 秒交叉淡入 */
 html[data-skin="vintage"] .censer-art.censer-bloom {
   transform: none !important;
   filter: none;
